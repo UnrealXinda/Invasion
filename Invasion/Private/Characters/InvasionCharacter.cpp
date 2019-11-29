@@ -1,12 +1,20 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "InvasionCharacter.h"
+#include "Characters/InvasionCharacter.h"
+
+#include "InvasionGameplayStatics.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
+
+#include "Systems/TimeDilationSystem.h"
+
+REDIRECT_TICK_FUNC_IMPLEMENTATION(AInvasionCharacter)
 
 // Sets default values
 AInvasionCharacter::AInvasionCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 }
@@ -15,20 +23,28 @@ AInvasionCharacter::AInvasionCharacter()
 void AInvasionCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AInvasionCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 
 }
 
-// Called to bind functionality to input
-void AInvasionCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
 
+void AInvasionCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /*= 1.0F*/)
+{
+	switch (MoveState)
+	{
+	case EMoveState::Sprint:
+		GetCharacterMovement()->MaxWalkSpeed = MaxSprintSpeed;
+		break;
+	case EMoveState::Walk:
+		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+		break;
+	case EMoveState::Run:
+		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+		break;
+	}
+
+	AddMovementInput(WorldDirection, ScaleValue);
 }
 

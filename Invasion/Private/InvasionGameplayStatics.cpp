@@ -36,3 +36,10 @@ AInvasionPlayerCharacter* UInvasionGameplayStatics::GetInvasionPlayerCharacter(c
 {
 	return Cast<AInvasionPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(WorldContextObject, 0));
 }
+
+class ATimeDilationSystem* UInvasionGameplayStatics::GetTimeDilationSystem(const UObject* WorldContextObject)
+{
+	AInvasionGameMode* CurrentGameMode = GetInvasionGameMode(WorldContextObject);
+
+	return CurrentGameMode ? CurrentGameMode->GetTimeDilationSystem() : nullptr;
+}

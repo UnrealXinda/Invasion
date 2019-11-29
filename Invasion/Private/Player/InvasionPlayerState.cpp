@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "InvasionPlayerState.h"
-#include "InvasionPlayerConfiguration.h"
+#include "Player/InvasionPlayerState.h"
+#include "Player/InvasionPlayerConfiguration.h"
 
 AInvasionPlayerState::AInvasionPlayerState()
 {

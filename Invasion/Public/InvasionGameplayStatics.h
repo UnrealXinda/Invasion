@@ -38,4 +38,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = InvasionGameMode, meta = (WorldContext = "WorldContextObject"))
 	static class AInvasionPlayerCharacter* GetInvasionPlayerCharacter(const UObject* WorldContextObject);
 
+#pragma region Systems
+
+	/** Returns the pointer to the time dilation system if any */
+	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
+	static class ATimeDilationSystem* GetTimeDilationSystem(const UObject* WorldContextObject);
+
+#pragma endregion Systems
+
 };

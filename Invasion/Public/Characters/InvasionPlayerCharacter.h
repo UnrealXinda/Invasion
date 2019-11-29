@@ -14,4 +14,8 @@ class INVASION_API AInvasionPlayerCharacter : public AInvasionCharacter
 {
 	GENERATED_BODY()
 	
+public:
+
+	AInvasionPlayerCharacter();
+
 };

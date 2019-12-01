@@ -22,28 +22,44 @@ public:
 	ETimeGroup TimeGroup;
  
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TimeGroup)
-	float InvasionTimeDilation = 1.0F;
+	float InvasionTimeDilation = 1.0f;
 
 public:
 
 	// Sets default values for this character's properties
 	AInvasionCharacter();
 
-	/* The movement speed for walking */
+	/** The movement speed for walking */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxWalkSpeed;
 
-	/* The movement speed for running */
+	/** The movement speed for running */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxRunSpeed;
 
-	/* The movement speed for sprinting */
+	/** The movement speed for sprinting */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxSprintSpeed;
 
-	/* The movement state of the character */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	/** The movement state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EMoveState MoveState;
+
+	/** The movement state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EAimState AimState;
+
+	/** The current weapon used by the character */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon)
+	class AInvasionWeapon* CurrentWeapon;
+
+	/** Initial class that the player owns when begin play */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Weapon)
+	TSubclassOf<class AInvasionWeapon> StarterWeaponClass;
+
+	/** Socket name that the weapon is attached to the character mesh */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+	FName WeaponSocketName;
 
 public:
 

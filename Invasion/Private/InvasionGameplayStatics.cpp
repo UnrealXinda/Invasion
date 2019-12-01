@@ -2,15 +2,20 @@
 
 
 #include "InvasionGameplayStatics.h"
-#include "InvasionGameMode.h"
-#include "InvasionGameState.h"
-#include "InvasionPlayerState.h"
-#include "InvasionPlayerController.h"
 
-#include "Kismet/GameplayStatics.h"
+#include "Game/InvasionGameMode.h"
+#include "Game/InvasionGameState.h"
+
+#include "Player/InvasionPlayerState.h"
+#include "Player/InvasionPlayerController.h"
+#include "Player/InvasionPlayerCameraManager.h"
+
+#include "Systems/TimeDilationSystem.h"
 
 #include "Characters/InvasionCharacter.h"
 #include "Characters/InvasionPlayerCharacter.h"
+
+#include "Kismet/GameplayStatics.h"
 
 bool UInvasionGameplayStatics::IsInEditor()
 {
@@ -35,6 +40,13 @@ AInvasionPlayerController* UInvasionGameplayStatics::GetInvasionPlayerController
 AInvasionPlayerCharacter* UInvasionGameplayStatics::GetInvasionPlayerCharacter(const UObject* WorldContextObject)
 {
 	return Cast<AInvasionPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(WorldContextObject, 0));
+}
+
+class AInvasionPlayerCameraManager* UInvasionGameplayStatics::GetInvasionPlayerCameraManager(const UObject* WorldContextObject)
+{
+	AInvasionPlayerController* Controller = GetInvasionPlayerController(WorldContextObject);
+
+	return Controller ? Cast<AInvasionPlayerCameraManager>(Controller->PlayerCameraManager) : nullptr;
 }
 
 class ATimeDilationSystem* UInvasionGameplayStatics::GetTimeDilationSystem(const UObject* WorldContextObject)

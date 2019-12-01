@@ -26,7 +26,7 @@ public:
 	ETimeGroup TimeGroup;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = TimeGroup)
-	float InvasionTimeDilation = 1.0F;
+	float InvasionTimeDilation = 1.0f;
 
 public:
 
@@ -45,7 +45,10 @@ public:
 	void MoveRight(float Value);
 
 	/** Called from Tick to actually process movement */
-	void TickCharacterMovement();
+	void TickCharacterMovement(float DeltaTime);
+
+	/** Called from Tick to process camera FOV depending on player aiming state */
+	void TickCameraFOV(float DeltaTime);
 
 	/** Called via input to turn at a given rate. */
 	void Turn(float Rate);
@@ -100,11 +103,15 @@ public:
 
 protected:
 
+	/** Cached AInvasionPlayerCharacter type instance to avoid casting when try to access the controlled pawn */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	class AInvasionPlayerCharacter* PlayerCharacter;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	class AInvasionPlayerState* InvasionPlayerState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
+	class AInvasionPlayerCameraManager* InvasionPlayerCameraManager;
 
 	/** Local cache of the last input vector */
 	FVector LastMovementInputVector;

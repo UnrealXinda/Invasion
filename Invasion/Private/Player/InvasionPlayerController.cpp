@@ -1,13 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Characters/InvasionPlayerCharacter.h"
-
-#include "InvasionGameplayStatics.h"
-
 #include "Player/InvasionPlayerController.h"
 #include "Player/InvasionPlayerState.h"
 #include "Player/InvasionPlayerConfiguration.h"
+#include "Player/InvasionPlayerCameraManager.h"
+
+#include "Characters/InvasionPlayerCharacter.h"
+#include "Weapons/InvasionWeapon.h"
+
+#include "InvasionGameplayStatics.h"
 
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -20,6 +22,9 @@ REDIRECT_TICK_FUNC_IMPLEMENTATION(AInvasionPlayerController)
 AInvasionPlayerController::AInvasionPlayerController()
 {
 	TimeGroup = ETimeGroup::System;
+	InvasionTimeDilation = 1.0f;
+
+	PlayerCameraManagerClass = AInvasionPlayerCameraManager::StaticClass();
 }
 
 void AInvasionPlayerController::BeginPlay()
@@ -29,6 +34,7 @@ void AInvasionPlayerController::BeginPlay()
 	// Cache local variables to eliminate the necessity of casting every time we try to use it
 	PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
 	InvasionPlayerState = Cast<AInvasionPlayerState>(PlayerState);
+	InvasionPlayerCameraManager = Cast<AInvasionPlayerCameraManager>(PlayerCameraManager);
 
 	check(PlayerCharacter);
 	check(InvasionPlayerState);
@@ -68,7 +74,8 @@ void AInvasionPlayerController::SetupInputComponent()
 
 void AInvasionPlayerController::InvasionTick_Implementation(float DeltaTime)
 {
-	TickCharacterMovement();
+	TickCharacterMovement(DeltaTime);
+	TickCameraFOV(DeltaTime);
 }
 
 void AInvasionPlayerController::MoveForward(float Value)
@@ -81,7 +88,7 @@ void AInvasionPlayerController::MoveRight(float Value)
 	LastMovementInputVector.Y = Value;
 }
 
-void AInvasionPlayerController::TickCharacterMovement()
+void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
 	float Magnitude = LastMovementInputVector.Size();
 
@@ -107,6 +114,35 @@ void AInvasionPlayerController::TickCharacterMovement()
 
 		FVector WorldInputVector = GetWorldInputVector();
 		PlayerCharacter->MoveCharacter(WorldInputVector, 1.0F);
+	}
+}
+
+void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
+{
+	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	{
+		AInvasionWeapon* Weapon = PlayerCharacter->CurrentWeapon;
+
+		float TargetFOV;
+		float ZoomInterpSpeed = Weapon->ZoomInterpSpeed;
+
+		switch (PlayerCharacter->AimState)
+		{
+		case EAimState::Aiming:
+		{
+			TargetFOV = Weapon->ZoomedFOV;
+			break;
+		}
+		case EAimState::Idle:
+		{
+			TargetFOV = PlayerCameraManager->DefaultFOV;
+			break;
+		}
+		}
+
+		float CurrentFOV = PlayerCameraManager->GetFOVAngle();
+		float NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
+		PlayerCameraManager->SetFOV(NewFOV);
 	}
 }
 
@@ -140,27 +176,6 @@ void AInvasionPlayerController::LookUpAtRate(float Rate)
 
 void AInvasionPlayerController::OnPressDash()
 {
-	bool bForward = true;
-
-	// Rotate the character to face dash direction
-	if (!LastMovementInputVector.IsNearlyZero())
-	{
-		FRotator CharacterRot = PlayerCharacter->GetActorRotation();
-		FRotator WorldInputRot = GetWorldInputRotation();
-
-		float Roll = CharacterRot.Roll;
-		float Pitch = CharacterRot.Pitch;
-		float Yaw;
-
-		FVector CharacterForward = PlayerCharacter->GetActorForwardVector();
-		FVector WorldInputVector = GetWorldInputVector();
-		bForward = FVector::DotProduct(CharacterForward, WorldInputVector) > 0.0F;
-
-		// Reverse the character's orientation 180 degrees if trying to do a backwards dash
-		Yaw = bForward ? WorldInputRot.Yaw : 180.0F + WorldInputRot.Yaw;
-		PlayerCharacter->SetActorRotation(FRotator(Pitch, Yaw, Roll));
-	}
-
 }
 
 void AInvasionPlayerController::OnPressSprint()
@@ -175,22 +190,36 @@ void AInvasionPlayerController::OnReleaseSprint()
 
 void AInvasionPlayerController::OnPressAim()
 {
-
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->AimState = EAimState::Aiming;
+		PlayerCharacter->bUseControllerRotationYaw = true;
+	}
 }
 
 void AInvasionPlayerController::OnReleaseAim()
 {
-
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->AimState = EAimState::Idle;
+		PlayerCharacter->bUseControllerRotationYaw = false;
+	}
 }
 
 void AInvasionPlayerController::OnPressFire()
 {
-
+	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	{
+		PlayerCharacter->CurrentWeapon->StartFire();
+	}
 }
 
 void AInvasionPlayerController::OnReleaseFire()
 {
-
+	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	{
+		PlayerCharacter->CurrentWeapon->StopFire();
+	}
 }
 
 FRotator AInvasionPlayerController::GetWorldInputRotation() const

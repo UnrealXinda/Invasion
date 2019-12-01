@@ -23,3 +23,11 @@ enum class EMoveState : uint8
 	Sprint = 2   UMETA(DisplayName = "Sprint"),
 	Max    = 3,
 };
+
+UENUM(BlueprintType)
+enum class EAimState : uint8
+{
+	Idle   = 0   UMETA(DisplayName = "Idle"),
+	Aiming    = 1   UMETA(DisplayName = "Aim"),
+	Max    = 2,
+};

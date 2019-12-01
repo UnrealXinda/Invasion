@@ -38,6 +38,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = InvasionGameMode, meta = (WorldContext = "WorldContextObject"))
 	static class AInvasionPlayerCharacter* GetInvasionPlayerCharacter(const UObject* WorldContextObject);
 
+	/** Returns the pointer to the Invasion player camera manager */
+	UFUNCTION(BlueprintPure, Category = InvasionGameMode, meta = (WorldContext = "WorldContextObject"))
+	static class AInvasionPlayerCameraManager* GetInvasionPlayerCameraManager(const UObject* WorldContextObject);
+
 #pragma region Systems
 
 	/** Returns the pointer to the time dilation system if any */

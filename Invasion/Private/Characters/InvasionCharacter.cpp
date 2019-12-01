@@ -5,6 +5,10 @@
 
 #include "InvasionGameplayStatics.h"
 
+#include "Components/CapsuleComponent.h"
+#include "Weapons/InvasionWeapon.h"
+
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 #include "Systems/TimeDilationSystem.h"
@@ -17,6 +21,16 @@ AInvasionCharacter::AInvasionCharacter()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
+	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = false;
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
+
+	WeaponSocketName = "WeaponSocket";
+
+	MoveState = EMoveState::Run;
+	AimState = EAimState::Idle;
 }
 
 // Called when the game starts or when spawned
@@ -24,6 +38,16 @@ void AInvasionCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Spawn a weapon
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	CurrentWeapon = GetWorld()->SpawnActor<AInvasionWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->SetOwner(this);
+		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
+	}
 }
 
 void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)

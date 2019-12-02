@@ -45,7 +45,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EMoveState MoveState;
 
-	/** The movement state of the character */
+	/** The aim state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EAimState AimState;
 

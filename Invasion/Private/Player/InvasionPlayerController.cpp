@@ -95,9 +95,10 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 	if (Magnitude > 0.0F)
 	{
 		bool bInputAboveWalkThreshold = Magnitude > InvasionPlayerState->PlayerConfiguration->InputSetting.WalkInputThreshold;
+		bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
 		bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
 
-		if (!bInputAboveWalkThreshold)
+		if (!bInputAboveWalkThreshold || bIsAiming)
 		{
 			PlayerCharacter->MoveState = EMoveState::Walk;
 		}

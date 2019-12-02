@@ -20,6 +20,8 @@ public:
 
 	virtual FVector GetPawnViewLocation() const override;
 
+	virtual void InvasionTick_Implementation(float DeltaTime) override;
+
 protected:
 
 	/** Camera boom positioning the camera behind the character */
@@ -29,5 +31,9 @@ protected:
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+protected:
+
+	void TickMovementSpeed();
 
 };

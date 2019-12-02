@@ -28,6 +28,6 @@ UENUM(BlueprintType)
 enum class EAimState : uint8
 {
 	Idle   = 0   UMETA(DisplayName = "Idle"),
-	Aiming    = 1   UMETA(DisplayName = "Aim"),
+	Aiming = 1   UMETA(DisplayName = "Aimimg"),
 	Max    = 2,
 };

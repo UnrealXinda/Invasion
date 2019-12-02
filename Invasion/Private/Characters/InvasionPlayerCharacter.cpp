@@ -40,7 +40,7 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera->SetupAttachment(CameraBoom); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	MaxWalkSpeed = 200;
@@ -51,4 +51,31 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
 {
 	return FollowCamera->GetComponentLocation();
+}
+
+void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
+{
+	Super::InvasionTick_Implementation(DeltaTime);
+
+	TickMovementSpeed();
+}
+
+void AInvasionPlayerCharacter::TickMovementSpeed()
+{
+	float CurrentMaxSpeed = 0.0f;
+
+	switch (MoveState)
+	{
+	case EMoveState::Walk:
+		CurrentMaxSpeed = MaxWalkSpeed;
+		break;
+	case EMoveState::Run:
+		CurrentMaxSpeed = MaxRunSpeed;
+		break;
+	case EMoveState::Sprint:
+		CurrentMaxSpeed = MaxSprintSpeed;
+		break;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = CurrentMaxSpeed;
 }

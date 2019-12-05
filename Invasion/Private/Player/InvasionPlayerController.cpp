@@ -24,6 +24,9 @@ AInvasionPlayerController::AInvasionPlayerController()
 	TimeGroup = ETimeGroup::System;
 	InvasionTimeDilation = 1.0f;
 
+	ViewPitchMin = -90.0f;
+	ViewPitchMax = 90.0f;
+
 	PlayerCameraManagerClass = AInvasionPlayerCameraManager::StaticClass();
 }
 
@@ -75,6 +78,7 @@ void AInvasionPlayerController::SetupInputComponent()
 void AInvasionPlayerController::InvasionTick_Implementation(float DeltaTime)
 {
 	TickCharacterMovement(DeltaTime);
+	TickCameraManager(DeltaTime);
 	TickCameraFOV(DeltaTime);
 }
 
@@ -90,20 +94,21 @@ void AInvasionPlayerController::MoveRight(float Value)
 
 void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
-	float Magnitude = LastMovementInputVector.Size();
+	bool bCanMove = PlayerCharacter->CanMove();
+	bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
 
-	if (Magnitude > 0.0F)
+	if (bCanMove && bHasInput)
 	{
-		bool bInputAboveWalkThreshold = Magnitude > InvasionPlayerState->PlayerConfiguration->InputSetting.WalkInputThreshold;
 		bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
+		bool bCanSprint = PlayerCharacter->CanSprint();
 		bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
 
-		if (!bInputAboveWalkThreshold || bIsAiming)
+		if (bIsAiming)
 		{
 			PlayerCharacter->MoveState = EMoveState::Walk;
 		}
 
-		else if (bIsSprintKeyDown)
+		else if (bCanSprint && bIsSprintKeyDown)
 		{
 			PlayerCharacter->MoveState = EMoveState::Sprint;
 		}
@@ -116,6 +121,47 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 		FVector WorldInputVector = GetWorldInputVector();
 		PlayerCharacter->MoveCharacter(WorldInputVector, 1.0F);
 	}
+
+	// Reset move state to normal jog
+	else
+	{
+		PlayerCharacter->MoveState = EMoveState::Run;
+	}
+}
+
+void AInvasionPlayerController::TickCameraManager(float DeltaTime)
+{
+	if (PlayerCharacter)
+	{
+		// Update view min/max pitch value
+		{
+			float MinPitch = ViewPitchMin;
+			float MaxPitch = ViewPitchMax;
+
+			bool bIsAming = PlayerCharacter->AimState == EAimState::Aiming;
+			bool bHasWeapon = !!PlayerCharacter->CurrentWeapon;
+
+			if (bIsAming && bHasWeapon)
+			{
+				MinPitch = FMath::Max(MinPitch, PlayerCharacter->CurrentWeapon->ZoomInfo.ZoomedPitchMin);
+				MaxPitch = FMath::Min(MaxPitch, PlayerCharacter->CurrentWeapon->ZoomInfo.ZoomedPitchMax);
+			}
+
+			InvasionPlayerCameraManager->ViewPitchMin = MinPitch;
+			InvasionPlayerCameraManager->ViewPitchMax = MaxPitch;
+		}
+
+		// Play camera shake when sprinting
+		{
+			bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
+			bool bHasCameraShakeClass = !!SprintCameraShakeClass;
+
+			if (bIsSprinting && bHasCameraShakeClass)
+			{
+				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass);
+			}
+		}
+	}
 }
 
 void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
@@ -125,18 +171,18 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 		AInvasionWeapon* Weapon = PlayerCharacter->CurrentWeapon;
 
 		float TargetFOV;
-		float ZoomInterpSpeed = Weapon->ZoomInterpSpeed;
+		float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
 
 		switch (PlayerCharacter->AimState)
 		{
 		case EAimState::Aiming:
 		{
-			TargetFOV = Weapon->ZoomedFOV;
+			TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
 			break;
 		}
 		case EAimState::Idle:
 		{
-			TargetFOV = PlayerCameraManager->DefaultFOV;
+			TargetFOV = Weapon->ZoomInfo.DefaultFOV;
 			break;
 		}
 		}
@@ -191,7 +237,7 @@ void AInvasionPlayerController::OnReleaseSprint()
 
 void AInvasionPlayerController::OnPressAim()
 {
-	if (PlayerCharacter)
+	if (PlayerCharacter && PlayerCharacter->CanAim())
 	{
 		PlayerCharacter->AimState = EAimState::Aiming;
 		PlayerCharacter->bUseControllerRotationYaw = true;
@@ -209,7 +255,7 @@ void AInvasionPlayerController::OnReleaseAim()
 
 void AInvasionPlayerController::OnPressFire()
 {
-	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	if (PlayerCharacter && PlayerCharacter->CanFire() && PlayerCharacter->CurrentWeapon)
 	{
 		PlayerCharacter->CurrentWeapon->StartFire();
 	}

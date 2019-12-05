@@ -6,6 +6,32 @@
 #include "GameFramework/Actor.h"
 #include "InvasionWeapon.generated.h"
 
+USTRUCT(BlueprintType)
+struct FZoomInfo
+{
+	GENERATED_BODY()
+
+	/** FOV by default */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = 0.0, ClampMax = 90.0))
+	float DefaultFOV;
+
+	/** FOV when aiming */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = 0.0, ClampMax = 90.0))
+	float ZoomedFOV;
+
+	/** Minimum pitch when aiming */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	float ZoomedPitchMin;
+
+	/** Maximum pitch when aiming */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	float ZoomedPitchMax;
+
+	/** Interpolation speed while aiming */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = 0.0, ClampMax = 100.0))
+	float ZoomInterpSpeed;
+};
+
 UCLASS()
 class INVASION_API AInvasionWeapon : public AActor
 {
@@ -27,12 +53,12 @@ public:
 public:
 
 	/** FOV when aiming */
-	UPROPERTY(EditDefaultsOnly, Category = "Player")
-	float ZoomedFOV;
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	FZoomInfo ZoomInfo;
 
-	/** Interpolation speed while aiming */
-	UPROPERTY(EditDefaultsOnly, Category = "Player", meta = (ClampMin = 0.0, ClampMax = 100.0))
-	float ZoomInterpSpeed;
+	/** The maximum range of this weapon */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	float TraceRangeMax;
 
 	/** The maximum range of this weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")

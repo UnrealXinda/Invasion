@@ -24,9 +24,13 @@ AInvasionRifle::AInvasionRifle()
 	TracerTargetName = "Target";
 	MuzzleSocketName = "MuzzleSocket";
 
-	RangeMax = 10000.0f;
-	ZoomedFOV = 65.0f;
-	ZoomInterpSpeed = 20.0f;
+	TraceRangeMax = 10000.0f;
+
+	ZoomInfo.DefaultFOV = 90.0f;
+	ZoomInfo.ZoomedFOV = 65.0f;
+	ZoomInfo.ZoomInterpSpeed = 20.0f;
+	ZoomInfo.ZoomedPitchMin = -50.0f;
+	ZoomInfo.ZoomedPitchMax = 50.0f;
 
 	RecoilPitchMin = -0.1f;
 	RecoilPitchMax = -0.3f;
@@ -65,9 +69,9 @@ void AInvasionRifle::Fire()
 		//	float RandomConeHalfRadian = FMath::DegreesToRadians(RandomConeHalfDegrees);
 		//	ShotDirection = FMath::VRandCone(ShotDirection, RandomConeHalfRadian, RandomConeHalfRadian);
 
-		//	TraceEnd = EyeLocation + RangeMax * ShotDirection;
+		//	TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
 		//}
-		TraceEnd = EyeLocation + RangeMax * ShotDirection;
+		TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
 
 		FHitResult HitResult;
 		FCollisionQueryParams Params;

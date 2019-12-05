@@ -9,7 +9,6 @@
 #include "Weapons/InvasionWeapon.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 #include "Systems/TimeDilationSystem.h"
 
@@ -72,3 +71,27 @@ void AInvasionCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue 
 	AddMovementInput(WorldDirection, ScaleValue);
 }
 
+bool AInvasionCharacter::CanMove() const
+{
+	return true;
+}
+
+bool AInvasionCharacter::CanSprint() const
+{
+	bool bCanMove = CanMove();
+	bool bIsAiming = AimState == EAimState::Aiming;
+	return bCanMove && !bIsAiming;
+}
+
+bool AInvasionCharacter::CanAim() const
+{
+	bool bIsMoving = GetVelocity().SizeSquared() > 0.0f;
+	bool bIsSprinting = MoveState == EMoveState::Sprint;
+
+	return !(bIsMoving && bIsSprinting);
+}
+
+bool AInvasionCharacter::CanFire() const
+{
+	return AimState == EAimState::Aiming;
+}

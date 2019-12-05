@@ -63,6 +63,18 @@ public:
 
 public:
 
+	UFUNCTION(BlueprintPure)
+	virtual bool CanMove() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanSprint() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanAim() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanFire() const;
+
 	void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 
 protected:

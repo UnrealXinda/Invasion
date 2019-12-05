@@ -25,6 +25,14 @@ public:
 
 protected:
 
+	/** The normalized movement speed */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States, meta = (ClampMin = 0.0, ClampMax = 1.0))
+	float NormalizedSpeed;
+
+	/** The angle between movement direction and forward vector */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States, meta = (ClampMin = -180.0, ClampMax = 180.0))
+	float Direction;
+
 	/** The movement state of the character */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
 	EMoveState MoveState;

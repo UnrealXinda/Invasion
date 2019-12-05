@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Invasion.h"
-#include "InvasionEnums.h"
 #include "Interfaces/InvasionTick.h"
 #include "GameFramework/PlayerController.h"
 #include "Systems/TimeDilationSystem.h"
@@ -46,6 +45,9 @@ public:
 
 	/** Called from Tick to actually process movement */
 	void TickCharacterMovement(float DeltaTime);
+
+	/** Called from Tick to actually update camera manager */
+	void TickCameraManager(float DeltaTime);
 
 	/** Called from Tick to process camera FOV depending on player aiming state */
 	void TickCameraFOV(float DeltaTime);
@@ -103,13 +105,26 @@ public:
 
 protected:
 
+	/** Minimum view pitch value */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	float ViewPitchMin;
+
+	/** Maximum view pitch value */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	float ViewPitchMax;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake)
+	TSubclassOf<class UCameraShake> SprintCameraShakeClass;
+
 	/** Cached AInvasionPlayerCharacter type instance to avoid casting when try to access the controlled pawn */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	class AInvasionPlayerCharacter* PlayerCharacter;
 
+	/** Cached AInvasionPlayerState type instance to avoid casting when try to access the player state */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	class AInvasionPlayerState* InvasionPlayerState;
 
+	/** Cached AInvasionPlayerCameraManager type instance to avoid casting when try to access the player camera manager */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	class AInvasionPlayerCameraManager* InvasionPlayerCameraManager;
 

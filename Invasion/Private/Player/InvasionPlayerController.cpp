@@ -223,6 +223,30 @@ void AInvasionPlayerController::LookUpAtRate(float Rate)
 
 void AInvasionPlayerController::OnPressDash()
 {
+	if (PlayerCharacter->CanDash())
+	{
+		FRotator DashDirection;
+
+		// Rotate the character to face dash direction
+		if (!LastMovementInputVector.IsNearlyZero())
+		{
+			FRotator CharacterRot = PlayerCharacter->GetActorRotation();
+			FRotator WorldInputRot = GetWorldInputRotation();
+
+			float Roll = CharacterRot.Roll;
+			float Pitch = CharacterRot.Pitch;
+			float Yaw = WorldInputRot.Yaw;
+
+			DashDirection = FRotator(Pitch, Yaw, Roll);
+		}
+
+		else
+		{
+			DashDirection = PlayerCharacter->GetActorRotation();
+		}
+
+		PlayerCharacter->Dash(DashDirection);
+	}
 }
 
 void AInvasionPlayerController::OnPressSprint()

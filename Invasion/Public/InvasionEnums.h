@@ -31,3 +31,11 @@ enum class EAimState : uint8
 	Aiming = 1   UMETA(DisplayName = "Aimimg"),
 	Max    = 2,
 };
+
+UENUM(BlueprintType)
+enum class EDashState : uint8
+{
+	Idle    = 0   UMETA(DisplayName = "Idle"),
+	Dashing = 1   UMETA(DisplayName = "Dashing"),
+	Max     = 2,
+};

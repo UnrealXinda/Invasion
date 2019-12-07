@@ -26,9 +26,6 @@ public:
 
 public:
 
-	// Sets default values for this character's properties
-	AInvasionCharacter();
-
 	/** The movement speed for walking */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxWalkSpeed;
@@ -62,6 +59,9 @@ public:
 	FName WeaponSocketName;
 
 public:
+
+	// Sets default values for this character's properties
+	AInvasionCharacter();
 
 	UFUNCTION(BlueprintPure)
 	virtual bool CanMove() const;

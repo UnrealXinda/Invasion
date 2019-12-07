@@ -13,6 +13,12 @@ UCLASS()
 class INVASION_API AInvasionPlayerCharacter : public AInvasionCharacter
 {
 	GENERATED_BODY()
+
+public:	
+
+	/** The dash state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EDashState DashState;
 	
 public:
 
@@ -31,6 +37,25 @@ protected:
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	/** The animation montage used for dashing */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
+	class UAnimMontage* DashMontage;
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	virtual bool CanDash() const;
+
+	virtual bool CanMove() const override;
+
+	virtual bool CanSprint() const override;
+
+	virtual bool CanAim() const override;
+
+	virtual bool CanFire() const override;
+
+	void Dash(FRotator Direction);
 
 protected:
 

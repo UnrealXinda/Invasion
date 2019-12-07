@@ -5,6 +5,8 @@
 
 #include "Components/CapsuleComponent.h"
 
+#include "Animation/AnimMontage.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
@@ -46,6 +48,8 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	MaxWalkSpeed = 200;
 	MaxRunSpeed = 600;
 	MaxSprintSpeed = 800;
+
+	DashState = EDashState::Idle;
 }
 
 FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
@@ -58,6 +62,35 @@ void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
 	Super::InvasionTick_Implementation(DeltaTime);
 
 	TickMovementSpeed();
+}
+
+bool AInvasionPlayerCharacter::CanDash() const
+{
+	bool bIsAiming = AimState == EAimState::Aiming;
+	bool bIsDashing = DashState == EDashState::Dashing;
+	bool bCanMove = CanMove();
+
+	return !bIsAiming && !bIsDashing && bCanMove;
+}
+
+bool AInvasionPlayerCharacter::CanMove() const
+{
+	return Super::CanMove();
+}
+
+bool AInvasionPlayerCharacter::CanSprint() const
+{
+	return Super::CanSprint();
+}
+
+bool AInvasionPlayerCharacter::CanAim() const
+{
+	return Super::CanAim();
+}
+
+bool AInvasionPlayerCharacter::CanFire() const
+{
+	return Super::CanFire();
 }
 
 void AInvasionPlayerCharacter::TickMovementSpeed()
@@ -78,4 +111,14 @@ void AInvasionPlayerCharacter::TickMovementSpeed()
 	}
 
 	GetCharacterMovement()->MaxWalkSpeed = CurrentMaxSpeed;
+}
+
+void AInvasionPlayerCharacter::Dash(FRotator Direction)
+{
+	SetActorRotation(Direction);
+
+	if (DashMontage)
+	{
+		PlayAnimMontage(DashMontage);
+	}
 }

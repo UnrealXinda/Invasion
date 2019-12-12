@@ -26,17 +26,17 @@ public:
 
 public:
 
-	/** The movement speed for walking */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	float MaxWalkSpeed;
+	///** The movement speed for walking */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	//float MaxWalkSpeed;
 
-	/** The movement speed for running */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	float MaxRunSpeed;
+	///** The movement speed for running */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	//float MaxRunSpeed;
 
-	/** The movement speed for sprinting */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	float MaxSprintSpeed;
+	///** The movement speed for sprinting */
+	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	//float MaxSprintSpeed;
 
 	/** The movement state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
@@ -75,7 +75,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	virtual bool CanFire() const;
 
-	void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
+	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 
 protected:
 	// Called when the game starts or when spawned

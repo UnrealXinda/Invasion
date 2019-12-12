@@ -22,4 +22,15 @@ public:
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
+	/** The direction between target rotation and forward vector. Used for start run/sprint animation */
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = States, meta = (ClampMin = -180.0, ClampMax = 180.0))
+	float OrientDirection;
+
+	/** The angle above which the character should transit into a turn animation state for natural blending */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = States, meta = (ClampMin = 0.0, ClampMax = 180.0))
+	float SuddenTurnThreshold;
+
+	/** The flag that is driving animation state to transit into a blending state */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = States)
+	bool bShouldOrient;
 };

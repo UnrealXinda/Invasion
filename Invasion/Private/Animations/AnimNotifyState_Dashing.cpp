@@ -7,20 +7,28 @@
 
 void UAnimNotifyState_Dashing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration)
 {
-	AInvasionPlayerCharacter* Character = Cast<AInvasionPlayerCharacter>(MeshComp->GetOwner());
-
-	if (Character)
+	if (AInvasionPlayerCharacter* Character = Cast<AInvasionPlayerCharacter>(MeshComp->GetOwner()))
 	{
 		Character->DashState = EDashState::Dashing;
+
+	}
+
+	if (UAnimInstance* AnimInstance = MeshComp->GetAnimInstance())
+	{
+		CachedRootMotionMode = AnimInstance->RootMotionMode;
+		AnimInstance->SetRootMotionMode(ERootMotionMode::RootMotionFromMontagesOnly);
 	}
 }
 
 void UAnimNotifyState_Dashing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	AInvasionPlayerCharacter* Character = Cast<AInvasionPlayerCharacter>(MeshComp->GetOwner());
-
-	if (Character)
+	if (AInvasionPlayerCharacter* Character = Cast<AInvasionPlayerCharacter>(MeshComp->GetOwner()))
 	{
 		Character->DashState = EDashState::Idle;
+	}
+
+	if (UAnimInstance* AnimInstance = MeshComp->GetAnimInstance())
+	{
+		AnimInstance->SetRootMotionMode(CachedRootMotionMode);
 	}
 }

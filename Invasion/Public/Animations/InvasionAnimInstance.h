@@ -19,17 +19,11 @@ public:
 
 	UInvasionAnimInstance();
 
-	virtual void NativeInitializeAnimation() override;
-
-	virtual void NativeUpdateAnimation(float DeltaTime) override;
-
-protected:
-
 	/** The normalized movement speed */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States, meta = (ClampMin = 0.0, ClampMax = 1.0))
 	float NormalizedSpeed;
 
-	/** The angle between movement direction and forward vector */
+	/** The angle between movement direction and speed vector */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States, meta = (ClampMin = -180.0, ClampMax = 180.0))
 	float Direction;
 
@@ -40,6 +34,12 @@ protected:
 	/** The aim state of the character */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
 	EAimState AimState;
+
+	virtual void NativeInitializeAnimation() override;
+
+	virtual void NativeUpdateAnimation(float DeltaTime) override;
+
+protected:
 
 	/** The aim pitch of the character, used for aim offset */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)

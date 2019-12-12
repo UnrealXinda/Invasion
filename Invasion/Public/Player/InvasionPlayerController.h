@@ -46,6 +46,9 @@ public:
 	/** Called from Tick to actually process movement */
 	void TickCharacterMovement(float DeltaTime);
 
+	/** Called from Tick to orient character */
+	void TickCharacterRotation(float DeltaTime);
+
 	/** Called from Tick to actually update camera manager */
 	void TickCameraManager(float DeltaTime);
 
@@ -129,6 +132,5 @@ protected:
 	class AInvasionPlayerCameraManager* InvasionPlayerCameraManager;
 
 	/** Local cache of the last input vector */
-	FVector LastMovementInputVector;
-	
+	FVector LastMovementInputVector;	
 };

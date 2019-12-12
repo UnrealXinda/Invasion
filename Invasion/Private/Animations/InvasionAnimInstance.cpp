@@ -31,14 +31,6 @@ void UInvasionAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	{
 		MoveState = OwningPawn->MoveState;
 		AimState = OwningPawn->AimState;
-
-		FVector Velocity = OwningPawn->GetVelocity();
-		FRotator Rot = OwningPawn->GetActorRotation();
-		float Speed = Velocity.Size();
-		float MaxSpeed = OwningPawn->GetCharacterMovement()->MaxWalkSpeed;
-
-		NormalizedSpeed = Speed / MaxSpeed;
-		Direction = CalculateDirection(Velocity, Rot);
 	}
 }
 

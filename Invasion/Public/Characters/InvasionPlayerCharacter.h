@@ -22,7 +22,27 @@ public:
 	
 public:
 
-	AInvasionPlayerCharacter();
+	AInvasionPlayerCharacter();	
+
+	/** The normalized speed for root motion */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Movement)
+	float NormalizedSpeed;
+
+	/** The target movement direction for root motion blending */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Movement)
+	FVector TargetMovementDir;
+
+	/** If true, rotation should be handled by root motion other than controller */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Movement)
+	bool bAllowRootMotionRotation;
+
+	/** The rotation interpolation speed used for controlling character facing direction while running */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	float RunRotationInterpSpeed;
+
+	/** The rotation interpolation speed used for controlling character facing direction while sprinting */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
+	float SprintRotationInterpSpeed;
 
 	virtual FVector GetPawnViewLocation() const override;
 
@@ -55,10 +75,10 @@ public:
 
 	virtual bool CanFire() const override;
 
+	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */) override;
+
 	void Dash(FRotator Direction);
 
 protected:
-
-	void TickMovementSpeed();
 
 };

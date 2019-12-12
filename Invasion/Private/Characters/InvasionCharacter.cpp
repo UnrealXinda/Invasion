@@ -55,20 +55,20 @@ void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
 
 void AInvasionCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /*= 1.0F*/)
 {
-	switch (MoveState)
-	{
-	case EMoveState::Sprint:
-		GetCharacterMovement()->MaxWalkSpeed = MaxSprintSpeed;
-		break;
-	case EMoveState::Walk:
-		GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
-		break;
-	case EMoveState::Run:
-		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
-		break;
-	}
+	//switch (MoveState)
+	//{
+	//case EMoveState::Sprint:
+	//	GetCharacterMovement()->MaxWalkSpeed = MaxSprintSpeed;
+	//	break;
+	//case EMoveState::Walk:
+	//	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
+	//	break;
+	//case EMoveState::Run:
+	//	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
+	//	break;
+	//}
 
-	AddMovementInput(WorldDirection, ScaleValue);
+	//AddMovementInput(WorldDirection, ScaleValue);
 }
 
 bool AInvasionCharacter::CanMove() const

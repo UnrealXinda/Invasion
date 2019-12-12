@@ -45,11 +45,14 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	MaxWalkSpeed = 200;
-	MaxRunSpeed = 600;
-	MaxSprintSpeed = 800;
-
 	DashState = EDashState::Idle;
+
+	TargetMovementDir = FVector::ZeroVector;
+	NormalizedSpeed = 0.0f;
+
+	RunRotationInterpSpeed = 300.0f;
+	SprintRotationInterpSpeed = 90.0f;
+	bAllowRootMotionRotation = true;
 }
 
 FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
@@ -60,8 +63,6 @@ FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
 void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
 {
 	Super::InvasionTick_Implementation(DeltaTime);
-
-	TickMovementSpeed();
 }
 
 bool AInvasionPlayerCharacter::CanDash() const
@@ -93,24 +94,10 @@ bool AInvasionPlayerCharacter::CanFire() const
 	return Super::CanFire();
 }
 
-void AInvasionPlayerCharacter::TickMovementSpeed()
+void AInvasionPlayerCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */)
 {
-	float CurrentMaxSpeed = 0.0f;
-
-	switch (MoveState)
-	{
-	case EMoveState::Walk:
-		CurrentMaxSpeed = MaxWalkSpeed;
-		break;
-	case EMoveState::Run:
-		CurrentMaxSpeed = MaxRunSpeed;
-		break;
-	case EMoveState::Sprint:
-		CurrentMaxSpeed = MaxSprintSpeed;
-		break;
-	}
-
-	GetCharacterMovement()->MaxWalkSpeed = CurrentMaxSpeed;
+	NormalizedSpeed = ScaleValue;
+	TargetMovementDir = WorldDirection;
 }
 
 void AInvasionPlayerCharacter::Dash(FRotator Direction)

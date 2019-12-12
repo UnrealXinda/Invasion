@@ -4,6 +4,7 @@
 #include "Weapons/InvasionRifle.h"
 
 #include "Invasion.h"
+#include "Characters/InvasionCharacter.h"
 
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -48,64 +49,67 @@ void AInvasionRifle::BeginPlay()
 
 void AInvasionRifle::Fire()
 {
-	if (APawn* OwnerPawn = Cast<APawn>(GetOwner()))
+	if (AInvasionCharacter* OwnerPawn = Cast<AInvasionCharacter>(GetOwner()))
 	{
-		FVector EyeLocation;
-		FRotator EyeRotation;
-		OwnerPawn->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-
-		FVector ShotDirection;
-		FVector TraceEnd;
-		ShotDirection = EyeRotation.Vector();
-
-		// Add recoil to controller
-		if (APlayerController* PlayerController = Cast<APlayerController>(OwnerPawn->GetController()))
+		if (OwnerPawn->CanFire())
 		{
-			AddRecoilToController(PlayerController);
+			FVector EyeLocation;
+			FRotator EyeRotation;
+			OwnerPawn->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+			FVector ShotDirection;
+			FVector TraceEnd;
+			ShotDirection = EyeRotation.Vector();
+
+			// Add recoil to controller
+			if (APlayerController* PlayerController = Cast<APlayerController>(OwnerPawn->GetController()))
+			{
+				AddRecoilToController(PlayerController);
+			}
+			//else
+			//{
+			//	// Apply bullet spread to shots
+			//	float RandomConeHalfRadian = FMath::DegreesToRadians(RandomConeHalfDegrees);
+			//	ShotDirection = FMath::VRandCone(ShotDirection, RandomConeHalfRadian, RandomConeHalfRadian);
+
+			//	TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
+			//}
+			TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
+
+			FHitResult HitResult;
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(OwnerPawn);
+			Params.AddIgnoredActor(this);
+			Params.bTraceComplex = true;
+			Params.bReturnPhysicalMaterial = true;
+
+			// Blocking hit! Processing damage
+			bool bHitTarget = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, COLLISION_WEAPON, Params);
+
+			if (bHitTarget)
+			{
+				EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+
+				// Play impact effect
+				PlayImpactEffect(HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), SurfaceType);
+
+				TraceEnd = HitResult.ImpactPoint;
+			}
+
+			if (InvasionDebug::g_DebugDrawWeaponTrace)
+			{
+				FColor LineColor = bHitTarget ? FColor::Green : FColor::Red;
+				DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, LineColor, false, 1.0f, 0, 1.0f);
+			}
+
+			// Play tracer effect
+			PlayTracerEffect(TraceEnd);
+
+			// Play fire effects
+			PlayFireEffects();
+
+			LastFireTime = GetWorld()->TimeSeconds;
 		}
-		//else
-		//{
-		//	// Apply bullet spread to shots
-		//	float RandomConeHalfRadian = FMath::DegreesToRadians(RandomConeHalfDegrees);
-		//	ShotDirection = FMath::VRandCone(ShotDirection, RandomConeHalfRadian, RandomConeHalfRadian);
-
-		//	TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
-		//}
-		TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
-
-		FHitResult HitResult;
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(OwnerPawn);
-		Params.AddIgnoredActor(this);
-		Params.bTraceComplex = true;
-		Params.bReturnPhysicalMaterial = true;
-
-		// Blocking hit! Processing damage
-		bool bHitTarget = GetWorld()->LineTraceSingleByChannel(HitResult, EyeLocation, TraceEnd, COLLISION_WEAPON, Params);
-
-		if (bHitTarget)
-		{
-			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
-
-			// Play impact effect
-			PlayImpactEffect(HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), SurfaceType);
-
-			TraceEnd = HitResult.ImpactPoint;
-		}
-
-		if (InvasionDebug::g_DebugDrawWeaponTrace)
-		{
-			FColor LineColor = bHitTarget ? FColor::Green : FColor::Red;
-			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, LineColor, false, 1.0f, 0, 1.0f);
-		}
-
-		// Play tracer effect
-		PlayTracerEffect(TraceEnd);
-
-		// Play fire effects
-		PlayFireEffects();
-
-		LastFireTime = GetWorld()->TimeSeconds;
 	}
 }
 

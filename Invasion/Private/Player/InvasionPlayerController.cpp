@@ -78,6 +78,7 @@ void AInvasionPlayerController::SetupInputComponent()
 void AInvasionPlayerController::InvasionTick_Implementation(float DeltaTime)
 {
 	TickCharacterMovement(DeltaTime);
+	TickCharacterRotation(DeltaTime);
 	TickCameraManager(DeltaTime);
 	TickCameraFOV(DeltaTime);
 }
@@ -94,6 +95,8 @@ void AInvasionPlayerController::MoveRight(float Value)
 
 void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
+	FVector MoveDirection = FVector::ZeroVector;
+	float NormalizedSpeed = 0.0f;
 	bool bCanMove = PlayerCharacter->CanMove();
 	bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
 
@@ -118,14 +121,50 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 			PlayerCharacter->MoveState = EMoveState::Run;
 		}
 
-		FVector WorldInputVector = GetWorldInputVector();
-		PlayerCharacter->MoveCharacter(WorldInputVector, 1.0F);
+		MoveDirection = GetWorldInputVector();
+		NormalizedSpeed = 1.0f;
 	}
 
 	// Reset move state to normal jog
 	else
 	{
 		PlayerCharacter->MoveState = EMoveState::Run;
+	}
+
+	PlayerCharacter->MoveCharacter(MoveDirection, NormalizedSpeed);
+}
+
+void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
+{
+	if (PlayerCharacter)
+	{
+		// Can only control character rotation if it is not driven by root motion, and if it is not controlled by 
+		// controller yaw.
+		bool bCanControlRot = !(PlayerCharacter->bAllowRootMotionRotation || PlayerCharacter->bUseControllerRotationYaw);
+
+		if (bCanControlRot)
+		{
+			float InterpSpeed = 0.0f;
+
+			switch (PlayerCharacter->MoveState)
+			{
+			case EMoveState::Sprint:
+			{
+				InterpSpeed = PlayerCharacter->SprintRotationInterpSpeed;
+				break;
+			}
+			case EMoveState::Run:
+			{
+				InterpSpeed = PlayerCharacter->RunRotationInterpSpeed;
+				break;
+			}
+			}
+
+			FRotator CurrentRot = PlayerCharacter->GetActorRotation();
+			FRotator TargetRot = GetWorldInputRotation();
+			FRotator NewRot = FMath::RInterpConstantTo(CurrentRot, TargetRot, DeltaTime, InterpSpeed);
+			PlayerCharacter->SetActorRotation(NewRot);
+		}
 	}
 }
 
@@ -158,7 +197,10 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 
 			if (bIsSprinting && bHasCameraShakeClass)
 			{
-				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass);
+				const float kMaxSpeed = 600.0f;
+				float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
+				float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / kMaxSpeed);
+				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
 			}
 		}
 	}
@@ -181,6 +223,7 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 			break;
 		}
 		case EAimState::Idle:
+		default:
 		{
 			TargetFOV = Weapon->ZoomInfo.DefaultFOV;
 			break;
@@ -321,7 +364,7 @@ bool AInvasionPlayerController::IsActionKeyDown(FName ActionName)
 			return IsInputKeyDown(Mapping.Key);
 		});
 
-		bIsKeyDown = (Mapping != nullptr);
+		bIsKeyDown = !!Mapping;
 	}
 
 	return bIsKeyDown;

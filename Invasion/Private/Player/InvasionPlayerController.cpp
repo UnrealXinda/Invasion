@@ -63,6 +63,7 @@ void AInvasionPlayerController::SetupInputComponent()
 
 	// Face button actions
 	InputComponent->BindAction(InvasionStatics::Dash, IE_Pressed, this, &AInvasionPlayerController::OnPressDash);
+	InputComponent->BindAction(InvasionStatics::TakeCover, IE_Pressed, this, &AInvasionPlayerController::OnPressTakeCover);
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Pressed, this, &AInvasionPlayerController::OnPressSprint);
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Released, this, &AInvasionPlayerController::OnReleaseSprint);
 
@@ -292,6 +293,19 @@ void AInvasionPlayerController::OnPressDash()
 	}
 }
 
+void AInvasionPlayerController::OnPressTakeCover()
+{
+	if (PlayerCharacter->CanTakeCover())
+	{
+		PlayerCharacter->CoverState = ECoverState::LowIn;
+	}
+
+	else
+	{
+		PlayerCharacter->CoverState = ECoverState::LowOut;
+	}
+}
+
 void AInvasionPlayerController::OnPressSprint()
 {
 
@@ -322,17 +336,17 @@ void AInvasionPlayerController::OnReleaseAim()
 
 void AInvasionPlayerController::OnPressFire()
 {
-	if (PlayerCharacter && PlayerCharacter->CanFire() && PlayerCharacter->CurrentWeapon)
+	if (PlayerCharacter && PlayerCharacter->CanFire())
 	{
-		PlayerCharacter->CurrentWeapon->StartFire();
+		PlayerCharacter->StartFire();
 	}
 }
 
 void AInvasionPlayerController::OnReleaseFire()
 {
-	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	if (PlayerCharacter)
 	{
-		PlayerCharacter->CurrentWeapon->StopFire();
+		PlayerCharacter->StopFire();
 	}
 }
 

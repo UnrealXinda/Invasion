@@ -25,3 +25,13 @@ void AInvasionWeapon::StopFire()
 {
 
 }
+
+void AInvasionWeapon::SetWeaponVisibility(bool bVisible)
+{
+
+}
+
+bool AInvasionWeapon::IsWeaponVisible() const
+{
+	return true;
+}

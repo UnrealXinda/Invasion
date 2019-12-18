@@ -29,4 +29,5 @@ namespace InvasionStatics
 	DefineInputBindingNames(Dash);
 	DefineInputBindingNames(Fire);
 	DefineInputBindingNames(Sprint);
+	DefineInputBindingNames(TakeCover);
 }

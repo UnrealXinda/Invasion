@@ -35,6 +35,10 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
 	EAimState AimState;
 
+	/** The cover state of the character */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
+	ECoverState CoverState;
+
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;

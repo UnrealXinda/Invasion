@@ -30,6 +30,7 @@ AInvasionCharacter::AInvasionCharacter()
 
 	MoveState = EMoveState::Run;
 	AimState = EAimState::Idle;
+	CoverState = ECoverState::Idle;
 }
 
 // Called when the game starts or when spawned
@@ -94,4 +95,25 @@ bool AInvasionCharacter::CanAim() const
 bool AInvasionCharacter::CanFire() const
 {
 	return AimState == EAimState::Aiming;
+}
+
+bool AInvasionCharacter::CanTakeCover() const
+{
+	return CoverState == ECoverState::Idle;
+}
+
+void AInvasionCharacter::StartFire()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StartFire();
+	}
+}
+
+void AInvasionCharacter::StopFire()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StopFire();
+	}
 }

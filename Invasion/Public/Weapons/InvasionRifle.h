@@ -27,6 +27,10 @@ public:
 
 	virtual void StopFire() override;
 
+	virtual void SetWeaponVisibility(bool bVisible) override;
+
+	virtual bool IsWeaponVisible() const override;
+
 	void AddRecoilToController(class APlayerController* Controller) const;
 
 public:

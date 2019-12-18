@@ -10,6 +10,7 @@ UInvasionAnimInstance::UInvasionAnimInstance()
 {
 	MoveState = EMoveState::Run;
 	AimState = EAimState::Idle;
+	CoverState = ECoverState::Idle;
 
 	AimPitch = 0.0f;
 	AimPitchInterpSpeed = 20.0f;
@@ -31,6 +32,7 @@ void UInvasionAnimInstance::NativeUpdateAnimation(float DeltaTime)
 	{
 		MoveState = OwningPawn->MoveState;
 		AimState = OwningPawn->AimState;
+		CoverState = OwningPawn->CoverState;
 	}
 }
 

@@ -21,8 +21,6 @@ void UInvasionPlayerAnimInstance::NativeInitializeAnimation()
 
 void UInvasionPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
-	EMoveState LastMoveState = MoveState;
-
 	Super::NativeUpdateAnimation(DeltaTime);
 
 	if (OwningPawn)
@@ -62,23 +60,12 @@ void UInvasionPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 			bool bNoInputLastFrame = (NormalizedSpeed == 0.0f);
 			bool bHasInput = (CurrentNormalizedSpeed != 0.0f);
 
-			// Start moving
-			if (bNoInputLastFrame && bHasInput)
-			{
-				FRotator PawnRot = OwningPawn->GetActorRotation();
-				OrientDirection = CurrentDirection;
-				bShouldOrient = true;
-			}
+			bool bJustStartMoving = bNoInputLastFrame && bHasInput;
+			bool bIsSuddenTurn = FMath::Abs(CurrentDirection - Direction) > SuddenTurnThreshold;
 
-			// Sudden turn
-			else if (FMath::Abs(CurrentDirection - Direction) > SuddenTurnThreshold)
-			{
-				bShouldOrient = true;
-				OrientDirection = CurrentDirection;
-			}
+			bShouldOrient = bJustStartMoving || bIsSuddenTurn;
 
 			Direction = CurrentDirection;
-
 			NormalizedSpeed = CurrentNormalizedSpeed;
 		}
 	}

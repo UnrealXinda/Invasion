@@ -125,6 +125,16 @@ void AInvasionRifle::StopFire()
 	GetWorldTimerManager().ClearTimer(ShotIntervalTimerHandle);
 }
 
+void AInvasionRifle::SetWeaponVisibility(bool bVisible)
+{
+	MeshComp->SetVisibility(bVisible);
+}
+
+bool AInvasionRifle::IsWeaponVisible() const
+{
+	return MeshComp->bVisible;
+}
+
 void AInvasionRifle::AddRecoilToController(APlayerController* Controller) const
 {
 	if (Controller)

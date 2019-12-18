@@ -33,6 +33,19 @@ enum class EAimState : uint8
 };
 
 UENUM(BlueprintType)
+enum class ECoverState : uint8
+{
+	Idle    = 0   UMETA(DisplayName = "Idle"),
+	HighIn  = 1   UMETA(DisplayName = "HighIn"),
+	High    = 2   UMETA(DisplayName = "High"),
+	HighOut = 4   UMETA(DisplayName = "HighOut"),
+	LowIn   = 5   UMETA(DisplayName = "LowIn"),
+	Low     = 6   UMETA(DisplayName = "Low"),
+	LowOut  = 7   UMETA(DisplayName = "LowOut"),
+	Max     = 8,
+};
+
+UENUM(BlueprintType)
 enum class EDashState : uint8
 {
 	Idle    = 0   UMETA(DisplayName = "Idle"),

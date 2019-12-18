@@ -75,6 +75,12 @@ public:
 
 	virtual bool CanFire() const override;
 
+	virtual bool CanTakeCover() const override;
+
+	virtual void StartFire() override;
+
+	virtual void StopFire() override;
+
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */) override;
 
 	void Dash(FRotator Direction);

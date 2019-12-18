@@ -94,6 +94,21 @@ bool AInvasionPlayerCharacter::CanFire() const
 	return Super::CanFire();
 }
 
+bool AInvasionPlayerCharacter::CanTakeCover() const
+{
+	return Super::CanTakeCover();
+}
+
+void AInvasionPlayerCharacter::StartFire()
+{
+	Super::StartFire();
+}
+
+void AInvasionPlayerCharacter::StopFire()
+{
+	Super::StopFire();
+}
+
 void AInvasionPlayerCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */)
 {
 	NormalizedSpeed = ScaleValue;

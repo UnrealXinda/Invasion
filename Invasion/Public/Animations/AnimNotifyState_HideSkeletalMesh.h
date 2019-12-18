@@ -20,4 +20,5 @@ public:
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) override;
 
 	bool bCachedMeshVisibility;
+	bool bCachedWeaponMeshVisiblity;
 };

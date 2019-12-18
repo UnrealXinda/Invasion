@@ -50,6 +50,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void StopFire();
 
+	UFUNCTION(BlueprintCallable)
+	virtual void SetWeaponVisibility(bool bVisible);
+
+	UFUNCTION(BlueprintPure)
+	virtual bool IsWeaponVisible() const;
+
 public:
 
 	/** FOV when aiming */

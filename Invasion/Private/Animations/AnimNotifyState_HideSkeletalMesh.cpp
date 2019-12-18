@@ -2,6 +2,8 @@
 
 
 #include "Animations/AnimNotifyState_HideSkeletalMesh.h"
+#include "Characters/InvasionCharacter.h"
+#include "Weapons/InvasionWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
 
 
@@ -12,6 +14,15 @@ void UAnimNotifyState_HideSkeletalMesh::NotifyBegin(USkeletalMeshComponent* Mesh
 		bCachedMeshVisibility = MeshComp->bVisible;
 		MeshComp->SetVisibility(false);
 	}
+
+	if (AInvasionCharacter* Character = Cast<AInvasionCharacter>(MeshComp->GetOwner()))
+	{
+		if (Character->CurrentWeapon)
+		{
+			bCachedMeshVisibility = Character->CurrentWeapon->IsWeaponVisible();
+			Character->CurrentWeapon->SetWeaponVisibility(false);
+		}
+	}
 }
 
 void UAnimNotifyState_HideSkeletalMesh::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
@@ -19,5 +30,13 @@ void UAnimNotifyState_HideSkeletalMesh::NotifyEnd(USkeletalMeshComponent* MeshCo
 	if (MeshComp)
 	{
 		MeshComp->SetVisibility(bCachedMeshVisibility);
+	}
+
+	if (AInvasionCharacter* Character = Cast<AInvasionCharacter>(MeshComp->GetOwner()))
+	{
+		if (Character->CurrentWeapon)
+		{
+			Character->CurrentWeapon->SetWeaponVisibility(bCachedMeshVisibility);
+		}
 	}
 }

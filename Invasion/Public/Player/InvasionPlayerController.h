@@ -76,6 +76,9 @@ public:
 	/** Called for dashing in current input direction */
 	void OnPressDash();
 
+	/** Called when attempting to take cover */
+	void OnPressTakeCover();
+
 	/** Called when sprint button pressed down */
 	void OnPressSprint();
 

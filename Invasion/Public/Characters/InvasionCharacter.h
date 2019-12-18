@@ -46,6 +46,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EAimState AimState;
 
+	/** The cover state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	ECoverState CoverState;
+
 	/** The current weapon used by the character */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon)
 	class AInvasionWeapon* CurrentWeapon;
@@ -74,6 +78,15 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	virtual bool CanFire() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanTakeCover() const;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StartFire();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StopFire();
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 

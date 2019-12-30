@@ -13,16 +13,18 @@ UCLASS()
 class INVASION_API AInvasionPlayerCharacter : public AInvasionCharacter
 {
 	GENERATED_BODY()
+	
+public:
 
-public:	
+	AInvasionPlayerCharacter();
 
 	/** The dash state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EDashState DashState;
-	
-public:
 
-	AInvasionPlayerCharacter();	
+	/** The execute state of the character */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = States)
+	EExecuteState ExecuteState;
 
 	/** The normalized speed for root motion */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Movement)
@@ -63,9 +65,15 @@ protected:
 	class UAnimMontage* DashMontage;
 
 public:
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void ExecuteCharacter(AInvasionCharacter* Victim);
 
 	UFUNCTION(BlueprintCallable)
-	virtual bool CanDash() const;
+	virtual bool CanDash() const;	
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanExecute() const;
 
 	virtual bool CanMove() const override;
 

@@ -40,19 +40,7 @@ void UInvasionPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(OwningPawn))
 		{
 			FVector TargetMovementDir = PlayerCharacter->TargetMovementDir;
-			FRotator PawnRot;
-			
-			if (PlayerCharacter->bUseControllerRotationYaw)
-			{
-				PawnRot = PlayerCharacter->GetControlRotation();
-				PawnRot.Roll = 0.0f;
-				PawnRot.Pitch = 0.0f;
-			}
-
-			else
-			{
-				PawnRot = OwningPawn->GetActorRotation();
-			}
+			FRotator PawnRot = OwningPawn->GetActorRotation();
 
 			float CurrentNormalizedSpeed = PlayerCharacter->NormalizedSpeed;
 			float CurrentDirection = CalculateDirection(TargetMovementDir, PawnRot);

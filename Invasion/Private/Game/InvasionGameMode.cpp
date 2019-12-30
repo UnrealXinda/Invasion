@@ -7,6 +7,7 @@
 #include "Player/InvasionPlayerState.h"
 
 #include "Systems/TimeDilationSystem.h"
+#include "Systems/CoverSystem.h"
 
 AInvasionGameMode::AInvasionGameMode()
 {
@@ -14,11 +15,17 @@ AInvasionGameMode::AInvasionGameMode()
 	PlayerStateClass = AInvasionPlayerState::StaticClass();
 
 	TimeDilationSystemClass = ATimeDilationSystem::StaticClass();
+	CoverSystemClass = ACoverSystem::StaticClass();
 }
 
 ATimeDilationSystem* AInvasionGameMode::GetTimeDilationSystem() const
 {
 	return TimeDilationSystem;
+}
+
+ACoverSystem* AInvasionGameMode::GetCoverSystem() const
+{
+	return CoverSystem;
 }
 
 void AInvasionGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -29,6 +36,8 @@ void AInvasionGameMode::InitGame(const FString& MapName, const FString& Options,
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	TimeDilationSystem = GetWorld()->SpawnActor<ATimeDilationSystem>(TimeDilationSystemClass, Params);
+	CoverSystem = GetWorld()->SpawnActor<ACoverSystem>(CoverSystemClass, Params);
 
 	check(TimeDilationSystem);
+	check(CoverSystem);
 }

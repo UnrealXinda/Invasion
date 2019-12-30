@@ -4,6 +4,8 @@
 #include "Animations/InvasionAnimInstance.h"
 
 #include "Characters/InvasionCharacter.h"
+#include "Actors/CoverVolume.h"
+#include "Components/IKComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 UInvasionAnimInstance::UInvasionAnimInstance()
@@ -14,6 +16,9 @@ UInvasionAnimInstance::UInvasionAnimInstance()
 
 	AimPitch = 0.0f;
 	AimPitchInterpSpeed = 20.0f;
+
+	JointTargetLeft = FVector(50.000000, 217.502960, -38.598057);
+	JointTargetRight = FVector(50.000000, 217.000000, 38.000000);
 }
 
 void UInvasionAnimInstance::NativeInitializeAnimation()
@@ -33,6 +38,24 @@ void UInvasionAnimInstance::NativeUpdateAnimation(float DeltaTime)
 		MoveState = OwningPawn->MoveState;
 		AimState = OwningPawn->AimState;
 		CoverState = OwningPawn->CoverState;
+		LastMovementDir = OwningPawn->LastMovementDir;
+
+		if (OwningPawn->CurrentCoverVolume)
+		{
+			CoverType = OwningPawn->CurrentCoverVolume->CoverType;
+		}
+
+		if (UIKComponent* IKComponent = OwningPawn->GetIKComponent())
+		{
+			if (IKComponent->bEnableIKAnimation)
+			{
+				LeftFootEffectorLoc = FVector(IKComponent->AnimIKLeftFootEffector, 0.0f, 0.0f);
+				RightFootEffectorLoc = FVector(IKComponent->AnimIKRightFootEffector, 0.0f, 0.0f);
+
+				LeftFootRot = IKComponent->AnimIKLeftFootRotation;
+				RightFootRot = IKComponent->AnimIKRightFootRotation;
+			}
+		}
 	}
 }
 

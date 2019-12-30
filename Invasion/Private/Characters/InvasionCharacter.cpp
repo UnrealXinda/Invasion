@@ -6,7 +6,11 @@
 #include "InvasionGameplayStatics.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/IKComponent.h"
+
 #include "Weapons/InvasionWeapon.h"
+#include "Actors/CoverVolume.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -17,20 +21,22 @@ REDIRECT_TICK_FUNC_IMPLEMENTATION(AInvasionCharacter)
 // Sets default values
 AInvasionCharacter::AInvasionCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+	IKComp = CreateDefaultSubobject<UIKComponent>(TEXT("IK Component"));
+
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = false;
 
-	GetCapsuleComponent()->SetCollisionResponseToChannel(COLLISION_WEAPON, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Weapon, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_CoverObject, ECR_Overlap);
 
 	WeaponSocketName = "WeaponSocket";
 
 	MoveState = EMoveState::Run;
 	AimState = EAimState::Idle;
 	CoverState = ECoverState::Idle;
+
+	CurrentCoverVolume = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -45,9 +51,11 @@ void AInvasionCharacter::BeginPlay()
 
 	if (CurrentWeapon)
 	{
-		CurrentWeapon->SetOwner(this);
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSocketName);
+		CurrentWeapon->EquipWeapon(this, GetMesh(), WeaponSocketName);
 	}
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleBeginOverlap);
+	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleEndOverlap);
 }
 
 void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
@@ -56,20 +64,74 @@ void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
 
 void AInvasionCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /*= 1.0F*/)
 {
-	//switch (MoveState)
-	//{
-	//case EMoveState::Sprint:
-	//	GetCharacterMovement()->MaxWalkSpeed = MaxSprintSpeed;
-	//	break;
-	//case EMoveState::Walk:
-	//	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
-	//	break;
-	//case EMoveState::Run:
-	//	GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
-	//	break;
-	//}
+}
 
-	//AddMovementInput(WorldDirection, ScaleValue);
+bool AInvasionCharacter::TryTakeCover()
+{
+	if (AvailableCoverVolumes.Num() > 0)
+	{
+		float MinDistSqr = FLT_MAX;
+		ACoverVolume* ClosestCover = nullptr;
+		FVector ActorLoc = GetActorLocation();
+
+		// Find the closest cover
+		for (ACoverVolume* Cover : AvailableCoverVolumes)
+		{
+			FVector CoverLoc = Cover->GetActorLocation();
+			float Distance = (ActorLoc - CoverLoc).SizeSquared();
+			if (Distance < MinDistSqr)
+			{
+				ClosestCover = Cover;
+			}
+
+			MinDistSqr = FMath::Min(MinDistSqr, Distance);
+		}
+
+		switch (ClosestCover->CoverType)
+		{
+		case ECoverType::Low:
+			CoverState = ECoverState::LowIn;
+			break;
+		case ECoverType::High:
+			CoverState = ECoverState::HighIn;
+			break;
+		}
+
+		CurrentCoverVolume = ClosestCover;
+
+		// Reorient the character so that its movement follows along the cover volume
+		SetActorRotation(CurrentCoverVolume->GetActorRotation());
+	}
+
+	return false;
+}
+
+bool AInvasionCharacter::TryUntakeCover()
+{
+	bool bIsTakingCover = !!CurrentCoverVolume;
+	bool bIsInCoverState = (CoverState == ECoverState::InCover);
+	bool bIsAiming = (AimState == EAimState::Aiming);
+
+	bool bCanUntakeCover = bIsTakingCover && bIsInCoverState && !bIsAiming;
+
+	if (bCanUntakeCover)
+	{
+		switch (CurrentCoverVolume->CoverType)
+		{
+		case ECoverType::Low:
+			CoverState = ECoverState::LowOut;
+			break;
+		case ECoverType::High:
+			CoverState = ECoverState::HighOut;
+			break;
+		}
+
+		CurrentCoverVolume = nullptr;
+
+		return true;
+	}
+
+	return false;
 }
 
 bool AInvasionCharacter::CanMove() const
@@ -81,15 +143,17 @@ bool AInvasionCharacter::CanSprint() const
 {
 	bool bCanMove = CanMove();
 	bool bIsAiming = AimState == EAimState::Aiming;
-	return bCanMove && !bIsAiming;
+	bool bIsInCover = CoverState != ECoverState::Idle;
+	return bCanMove && !bIsAiming && !bIsInCover;
 }
 
 bool AInvasionCharacter::CanAim() const
 {
 	bool bIsMoving = GetVelocity().SizeSquared() > 0.0f;
 	bool bIsSprinting = MoveState == EMoveState::Sprint;
+	bool bIsReadyForAiming = CoverState == ECoverState::Idle || CoverState == ECoverState::InCover;
 
-	return !(bIsMoving && bIsSprinting);
+	return !(bIsMoving && bIsSprinting) && bIsReadyForAiming;
 }
 
 bool AInvasionCharacter::CanFire() const
@@ -115,5 +179,40 @@ void AInvasionCharacter::StopFire()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StopFire();
+	}
+}
+
+void AInvasionCharacter::OnCapsuleBeginOverlap(
+	UPrimitiveComponent* OverlappedComp,
+	AActor*              OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32                OtherBodyIndex,
+	bool                 bFromSweep,
+	const FHitResult&    SweepResult
+)
+{
+	if (ACoverVolume* CoverVolume = Cast<ACoverVolume>(OtherActor))
+	{
+		if (OtherComp == CoverVolume->GetCoverComponent())
+		{
+			AvailableCoverVolumes.AddUnique(CoverVolume);
+			// TODO: register callback on cover volume to show world space widget
+		}
+	}
+}
+
+void AInvasionCharacter::OnCapsuleEndOverlap(
+	UPrimitiveComponent* OverlappedComp,
+	AActor*              OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32                OtherBodyIndex
+)
+{
+	if (ACoverVolume* CoverVolume = Cast<ACoverVolume>(OtherActor))
+	{
+		if (OtherComp == CoverVolume->GetCoverComponent())
+		{
+			AvailableCoverVolumes.RemoveSwap(CoverVolume);
+		}
 	}
 }

@@ -11,8 +11,15 @@
 
 #define SURFACE_FLESH_DEFAULT      SurfaceType1
 #define SURFACE_FLESH_VULNERABLE   SurfaceType2
+#define SURFACE_METAL_DEFAULT      SurfaceType3
+#define SURFACE_METAL_VULNERABLE   SurfaceType4
 
-#define COLLISION_WEAPON           ECC_GameTraceChannel1
+// Custom Object Channels
+#define ECC_CoverObject      ECC_GameTraceChannel2
+
+// Custom Trace Channels
+#define ECC_Weapon           ECC_GameTraceChannel1
+
 
 namespace InvasionStatics
 {
@@ -30,4 +37,5 @@ namespace InvasionStatics
 	DefineInputBindingNames(Fire);
 	DefineInputBindingNames(Sprint);
 	DefineInputBindingNames(TakeCover);
+	DefineInputBindingNames(Execute);
 }

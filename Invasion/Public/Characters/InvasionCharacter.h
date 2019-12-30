@@ -26,18 +26,6 @@ public:
 
 public:
 
-	///** The movement speed for walking */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	//float MaxWalkSpeed;
-
-	///** The movement speed for running */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	//float MaxRunSpeed;
-
-	///** The movement speed for sprinting */
-	//UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
-	//float MaxSprintSpeed;
-
 	/** The movement state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EMoveState MoveState;
@@ -50,6 +38,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	ECoverState CoverState;
 
+	/** The last movement direction of the character. Used for animation blending */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EMoveDirection LastMovementDir;
+
 	/** The current weapon used by the character */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon)
 	class AInvasionWeapon* CurrentWeapon;
@@ -61,6 +53,10 @@ public:
 	/** Socket name that the weapon is attached to the character mesh */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
 	FName WeaponSocketName;
+
+	/** The current cover volume that the character is taking */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Cover)
+	class ACoverVolume* CurrentCoverVolume;
 
 public:
 
@@ -90,8 +86,41 @@ public:
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	virtual bool TryTakeCover();
 
+	virtual bool TryUntakeCover();
+
+	FORCEINLINE class UIKComponent* GetIKComponent() const { return IKComp; }
+
+protected:
+
+	/** The current cover volume that the character is taking */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Cover)
+	TArray<class ACoverVolume*> AvailableCoverVolumes;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Components)
+	class UIKComponent* IKComp;
+
+protected:
+
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;	
+
+	UFUNCTION()
+	virtual void OnCapsuleBeginOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor*              OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32                OtherBodyIndex,
+		bool                 bFromSweep,
+		const FHitResult&    SweepResult
+	);
+
+	UFUNCTION()
+	virtual void OnCapsuleEndOverlap(
+		UPrimitiveComponent* OverlappedComp,
+		AActor*              OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32                OtherBodyIndex
+	);
 };

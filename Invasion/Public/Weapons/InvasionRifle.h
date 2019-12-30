@@ -18,6 +18,9 @@ public:
 
 	AInvasionRifle();
 
+	UFUNCTION(BlueprintPure)
+	float GetDamageAmountFromSurfaceType(EPhysicalSurface SurfaceType) const;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -37,12 +40,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	class UStaticMeshComponent* MeshComp;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	class UParticleSystem* DefaultImpactEffect;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	class UParticleSystem* FleshImpactEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	class UParticleSystem* TracerEffect;
@@ -80,4 +77,5 @@ protected:
 	void PlayImpactEffect(FVector Location, FRotator Rotation, EPhysicalSurface SurfaceType);
 	void PlayTracerEffect(FVector TargetPoint);
 	void PlayCameraShakeEffect();
+	void BroadcastOnWeaponFire();
 };

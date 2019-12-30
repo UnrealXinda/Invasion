@@ -4,9 +4,16 @@
 #include "Modules/ModuleManager.h"
 
 int32 InvasionDebug::g_DebugDrawWeaponTrace = 0;
+int32 InvasionDebug::g_DebugDrawIKTrace = 0;
 
 FAutoConsoleVariableRef InvasionDebug::CVarDebugDrawWeaponTrace(
 	TEXT("Invasion.DebugDrawWeaponTrace"),
 	InvasionDebug::g_DebugDrawWeaponTrace,
 	TEXT("Draw debug weapon trace"),
+	ECVF_Cheat);
+
+FAutoConsoleVariableRef InvasionDebug::CVarDebugDrawIKTrace(
+	TEXT("Invasion.DebugDrawIKTrace"),
+	InvasionDebug::g_DebugDrawIKTrace,
+	TEXT("Draw debug IK trace"),
 	ECVF_Cheat);

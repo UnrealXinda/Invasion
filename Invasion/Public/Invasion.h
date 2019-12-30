@@ -7,7 +7,6 @@
 #include "InvasionEnums.h"
 #include "InvasionDebug.h"
 #include "InvasionMacros.h"
-#include "InvasionDelegates.h"
 
 #define SURFACE_FLESH_DEFAULT      SurfaceType1
 #define SURFACE_FLESH_VULNERABLE   SurfaceType2

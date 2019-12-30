@@ -12,6 +12,7 @@
 
 #include "Systems/TimeDilationSystem.h"
 #include "Systems/CoverSystem.h"
+#include "Systems/PostProcessSystem.h"
 
 #include "Characters/InvasionCharacter.h"
 #include "Characters/InvasionPlayerCharacter.h"
@@ -43,22 +44,144 @@ AInvasionPlayerCharacter* UInvasionGameplayStatics::GetInvasionPlayerCharacter(c
 	return Cast<AInvasionPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(WorldContextObject, 0));
 }
 
-class AInvasionPlayerCameraManager* UInvasionGameplayStatics::GetInvasionPlayerCameraManager(const UObject* WorldContextObject)
+AInvasionPlayerCameraManager* UInvasionGameplayStatics::GetInvasionPlayerCameraManager(const UObject* WorldContextObject)
 {
 	AInvasionPlayerController* Controller = GetInvasionPlayerController(WorldContextObject);
 	return Controller ? Cast<AInvasionPlayerCameraManager>(Controller->PlayerCameraManager) : nullptr;
 }
 
-class ATimeDilationSystem* UInvasionGameplayStatics::GetTimeDilationSystem(const UObject* WorldContextObject)
+ATimeDilationSystem* UInvasionGameplayStatics::GetTimeDilationSystem(const UObject* WorldContextObject)
 {
 	AInvasionGameMode* CurrentGameMode = GetInvasionGameMode(WorldContextObject);
 	return CurrentGameMode ? CurrentGameMode->GetTimeDilationSystem() : nullptr;
 }
 
-class ACoverSystem* UInvasionGameplayStatics::GetCoverSystem(const UObject* WorldContextObject)
+ACoverSystem* UInvasionGameplayStatics::GetCoverSystem(const UObject* WorldContextObject)
 {
 	AInvasionGameMode* CurrentGameMode = GetInvasionGameMode(WorldContextObject);
 	return CurrentGameMode ? CurrentGameMode->GetCoverSystem() : nullptr;
+}
+
+APostProcessSystem* UInvasionGameplayStatics::GetPostProcessSystem(const UObject* WorldContextObject)
+{
+	AInvasionGameMode* CurrentGameMode = GetInvasionGameMode(WorldContextObject);
+	return CurrentGameMode ? CurrentGameMode->GetPostProcessSystem() : nullptr;
+}
+
+void UInvasionGameplayStatics::PlayPostProcessEffect(
+	const UObject*                                      WorldContextObject,
+	EPostProcessEffectType                              Type,
+	const FOnPostProcessEffectPlaybackFinishedDelegate& OnFinishedCallback,
+	UCurveFloat*                                        PlaybackCurve,
+	EPlaybackInterruptType                              HandlerType,
+	float                                               PlaybackRate,
+	bool                                                bAffectedByGlobalTimeDilation
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->PlayPostProcessEffect(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+	}
+}
+
+void UInvasionGameplayStatics::PlayPostProcessScalarSetting(
+	const UObject*                                             WorldContextObject,
+	EPostProcessScalarSettingType                              Type,
+	const FOnPostProcessScalarSettingPlaybackFinishedDelegate& OnFinishedCallback,
+	UCurveFloat*                                               PlaybackCurve,
+	EPlaybackInterruptType                                     HandlerType,
+	float                                                      PlaybackRate,
+	bool                                                       bAffectedByGlobalTimeDilation
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->PlayPostProcessScalarSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+	}
+}
+
+void UInvasionGameplayStatics::PlayPostProcessVectorSetting(
+	const UObject*                                             WorldContextObject,
+	EPostProcessVectorSettingType                              Type,
+	const FOnPostProcessVectorSettingPlaybackFinishedDelegate& OnFinishedCallback,
+	UCurveLinearColor*                                         PlaybackCurve,
+	EPlaybackInterruptType                                     HandlerType,
+	float                                                      PlaybackRate,
+	bool                                                       bAffectedByGlobalTimeDilation
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->PlayPostProcessVectorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+	}
+}
+
+void UInvasionGameplayStatics::PlayPostProcessColorSetting(
+	const UObject*                                            WorldContextObject,
+	EPostProcessColorSettingType                              Type,
+	const FOnPostProcessColorSettingPlaybackFinishedDelegate& OnFinishedCallback,
+	UCurveLinearColor*                                        PlaybackCurve,
+	EPlaybackInterruptType                                    HandlerType,
+	float                                                     PlaybackRate,
+	bool                                                      bAffectedByGlobalTimeDilation
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->PlayPostProcessColorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+	}
+}
+
+void UInvasionGameplayStatics::SetPostProcessEffectControlAmount(
+	const UObject*         WorldContextObject,
+	EPostProcessEffectType Type,
+	float                  ControlAmount,
+	EPlaybackInterruptType HandlerType
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->SetPostProcessEffectControlAmount(Type, ControlAmount, HandlerType);
+	}
+}
+
+void UInvasionGameplayStatics::SetPostProcessSettingScalarValue(
+	const UObject*                WorldContextObject,
+	EPostProcessScalarSettingType Type,
+	float                         Value,
+	EPlaybackInterruptType        HandlerType
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->SetPostProcessSettingScalarValue(Type, Value, HandlerType);
+	}
+}
+
+void UInvasionGameplayStatics::SetPostProcessSettingVectorValue(
+	const UObject*                WorldContextObject,
+	EPostProcessVectorSettingType Type,
+	FVector4                      Value,
+	EPlaybackInterruptType        HandlerType
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->SetPostProcessSettingVectorValue(Type, Value, HandlerType);
+	}
+}
+
+void UInvasionGameplayStatics::SetPostProcessSettingColorValue(
+	const UObject*               WorldContextObject,
+	EPostProcessColorSettingType Type,
+	FLinearColor                 Value,
+	EPlaybackInterruptType       HandlerType
+)
+{
+	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	{
+		PostProcessSystem->SetPostProcessSettingColorValue(Type, Value, HandlerType);
+	}
 }
 
 bool UInvasionGameplayStatics::IsAngleInsideRange(float Angle, float Min, float Max)

@@ -15,6 +15,8 @@ enum class ETimeGroup : uint8
 	Max    = 5,
 };
 
+#pragma region Character States
+
 UENUM(BlueprintType)
 enum class EMoveState : uint8
 {
@@ -68,6 +70,8 @@ enum class EDashState : uint8
 	Max     = 2,
 };
 
+#pragma endregion Character States
+
 UENUM(BlueprintType)
 enum class ECoverType : uint8
 {
@@ -75,3 +79,73 @@ enum class ECoverType : uint8
 	High = 1  UMETA(DisplayName = "High"),
 	Max  = 2,
 };
+
+#pragma region Playback
+
+UENUM(BlueprintType)
+enum class EPlaybackFinishType : uint8
+{
+	Finished     = 0   UMETA(DisplayName = "Finished"),
+	Interrupted  = 1   UMETA(DisplayName = "Interrupted"),
+	FailedToPlay = 2   UMETA(DisplayName = "Failed To Play"),
+	Max          = 3,
+};
+
+UENUM(BlueprintType)
+enum class EPlaybackInterruptType : uint8
+{
+	DropThis = 0     UMETA(DisplayName = "Drop This"),
+	Override = 1     UMETA(DisplayName = "Override"),
+	Max      = 2,
+};
+
+#pragma endregion Playback
+
+#pragma region Post Process System
+
+UENUM(BlueprintType)
+enum class EPostProcessEffectType : uint8
+{
+	RadialBlur           = 0  UMETA(DisplayName = "Radial Blur"),
+	BrokenLens           = 1  UMETA(DisplayName = "Broken Lens"),
+	Glitch               = 2  UMETA(DisplayName = "Glitch"),
+	Scan                 = 3  UMETA(DisplayName = "Scan"),
+	Max                  = 4,
+};
+
+UENUM(BlueprintType)
+enum class EPostProcessScalarSettingType : uint8
+{
+	BloomIntensity       = 0   UMETA(DisplayName = "Bloom Intensity"),
+	AutoExposureBias     = 1   UMETA(DisplayName = "Exposure Compensation"),
+	SceneFringeIntensity = 2   UMETA(DisplayName = "Chromatic Aberration Intensity"),
+	LensFlareIntensity   = 3   UMETA(DisplayName = "Lens Flares Intensity"),
+	VignetteIntensity    = 4   UMETA(DisplayName = "Vignette Intensity"),
+	GrainIntensity       = 5   UMETA(DisplayName = "Grain Intensity"),
+	FilmSlope            = 6   UMETA(DisplayName = "Film Slope"),
+	FilmToe              = 7   UMETA(DisplayName = "Film Toe"),
+	FilmShoulder         = 8   UMETA(DisplayName = "Film Shoulder"),
+	FilmBlackClip        = 9   UMETA(DisplayName = "Film Black Clip"),
+	FilmWhiteClip        = 10  UMETA(DisplayName = "Film White Clip"),
+	Max                  = 11,
+};
+
+UENUM(BlueprintType)
+enum class EPostProcessVectorSettingType : uint8
+{
+	ColorSaturation      = 0   UMETA(DisplayName = "Color Saturation"),
+	ColorContrast        = 1   UMETA(DisplayName = "Color Contrast"),
+	ColorGamma           = 2   UMETA(DisplayName = "Color Gamma"),
+	ColorGain            = 3   UMETA(DisplayName = "Color Gain"),
+	ColorOffset          = 4   UMETA(DisplayName = "Color Offset"),
+	Max                  = 5,
+};
+
+UENUM(BlueprintType)
+enum class EPostProcessColorSettingType : uint8
+{
+	Placeholder          = 0   UMETA(DisplayName = "Placeholder"),
+	Max                  = 1,
+};
+
+#pragma endregion Post Process System

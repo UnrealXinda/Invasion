@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UObject/NoExportTypes.h"
 #include "Invasion.h"
+#include "Systems/PostProcessSystem.h"
 #include "InvasionGameplayStatics.generated.h"
 
 /**
@@ -52,7 +53,93 @@ public:
 	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
 	static class ACoverSystem* GetCoverSystem(const UObject* WorldContextObject);
 
+	/** Returns the pointer to the post process system if any */
+	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
+	static class APostProcessSystem* GetPostProcessSystem(const UObject* WorldContextObject);
+
 #pragma endregion Systems
+
+#pragma region Post Process System Helper
+
+	// Play an effect means playing it over a period of time. This is in contrast to directly setting
+	// an effect's control amount
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void PlayPostProcessEffect(
+		const UObject*                                      WorldContextObject,
+		EPostProcessEffectType                              Type,
+		const FOnPostProcessEffectPlaybackFinishedDelegate& OnFinishedCallback,
+		class UCurveFloat*                                  PlaybackCurve,
+		EPlaybackInterruptType                              HandlerType = EPlaybackInterruptType::DropThis,
+		float                                               PlaybackRate = 1.0F,
+		bool                                                bAffectedByGlobalTimeDilation = true
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void PlayPostProcessScalarSetting(
+		const UObject*                                             WorldContextObject,
+		EPostProcessScalarSettingType                              Type,
+		const FOnPostProcessScalarSettingPlaybackFinishedDelegate& OnFinishedCallback,
+		class UCurveFloat*                                         PlaybackCurve,
+		EPlaybackInterruptType                                     HandlerType = EPlaybackInterruptType::DropThis,
+		float                                                      PlaybackRate = 1.0F,
+		bool                                                       bAffectedByGlobalTimeDilation = true
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void PlayPostProcessVectorSetting(
+		const UObject*                                             WorldContextObject,
+		EPostProcessVectorSettingType                              Type,
+		const FOnPostProcessVectorSettingPlaybackFinishedDelegate& OnFinishedCallback,
+		class UCurveLinearColor*                                   PlaybackCurve,
+		EPlaybackInterruptType                                     HandlerType = EPlaybackInterruptType::DropThis,
+		float                                                      PlaybackRate = 1.0F,
+		bool                                                       bAffectedByGlobalTimeDilation = true
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void PlayPostProcessColorSetting(
+		const UObject*                                            WorldContextObject,
+		EPostProcessColorSettingType                              Type,
+		const FOnPostProcessColorSettingPlaybackFinishedDelegate& OnFinishedCallback,
+		class UCurveLinearColor*                                  PlaybackCurve,
+		EPlaybackInterruptType                                    HandlerType = EPlaybackInterruptType::DropThis,
+		float                                                     PlaybackRate = 1.0F,
+		bool                                                      bAffectedByGlobalTimeDilation = true
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void SetPostProcessEffectControlAmount(
+		const UObject*         WorldContextObject,
+		EPostProcessEffectType Type,
+		float                  ControlAmount,
+		EPlaybackInterruptType HandlerType = EPlaybackInterruptType::Override
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void SetPostProcessSettingScalarValue(
+		const UObject*                WorldContextObject,
+		EPostProcessScalarSettingType Type,
+		float                         Value,
+		EPlaybackInterruptType        HandlerType = EPlaybackInterruptType::Override
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void SetPostProcessSettingVectorValue(
+		const UObject*                WorldContextObject,
+		EPostProcessVectorSettingType Type,
+		FVector4                      Value,
+		EPlaybackInterruptType        HandlerType = EPlaybackInterruptType::Override
+	);
+
+	UFUNCTION(BlueprintCallable, Category = InvasionPostProcessSystem, meta = (WorldContext = "WorldContextObject"))
+	static void SetPostProcessSettingColorValue(
+		const UObject*               WorldContextObject,
+		EPostProcessColorSettingType Type,
+		FLinearColor                 Value,
+		EPlaybackInterruptType       HandlerType = EPlaybackInterruptType::Override
+	);
+
+#pragma endregion Post Process System Helper
 
 #pragma region Miscellaneous
 

@@ -8,6 +8,7 @@
 
 class ATimeDilationSystem;
 class ACoverSystem;
+class APostProcessSystem;
 
 UCLASS()
 class INVASION_API AInvasionGameMode : public AGameModeBase
@@ -22,6 +23,8 @@ public:
 
 	ACoverSystem* GetCoverSystem() const;
 
+	APostProcessSystem* GetPostProcessSystem() const;
+
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 protected:
@@ -32,6 +35,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
 	TSubclassOf<ACoverSystem> CoverSystemClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
+	TSubclassOf<APostProcessSystem> PostProcessSystemClass;
+
 #pragma region System Runtime Instances
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Systems)
@@ -39,6 +45,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Systems)
 	ACoverSystem* CoverSystem;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Systems)
+	APostProcessSystem* PostProcessSystem;
 
 #pragma endregion System Runtime Instances
 

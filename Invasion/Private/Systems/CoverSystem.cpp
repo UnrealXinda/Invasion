@@ -24,8 +24,8 @@ void ACoverSystem::BeginPlay()
 	if (UWorld* World = GetWorld())
 	{
 		TArray<AActor*> TempActorArray;
-		TSubclassOf<ACoverSystem> Class;
-		UGameplayStatics::GetAllActorsOfClass(World, Class, TempActorArray);
+		TSubclassOf<ACoverVolume> Class;
+		UGameplayStatics::GetAllActorsOfClass(World, ACoverVolume::StaticClass(), TempActorArray);
 
 		for (AActor* Actor : TempActorArray)
 		{

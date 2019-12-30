@@ -4,12 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InvasionEnums.h"
+#include "InvasionMacros.h"
+#include "Interfaces/InvasionTick.h"
 #include "CoverSystem.generated.h"
 
 UCLASS()
-class INVASION_API ACoverSystem : public AActor
+class INVASION_API ACoverSystem : public AActor, public IInvasionTick
 {
 	GENERATED_BODY()
+
+	REDIRECT_TICK_FUNC()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = TimeGroup)
+	ETimeGroup TimeGroup;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TimeGroup)
+	float InvasionTimeDilation = 1.0F;
 	
 public:	
 

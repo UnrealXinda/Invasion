@@ -2,16 +2,18 @@
 
 
 #include "CoverSystem.h"
-
+#include "CoverVolume.h"
 #include "Kismet/GameplayStatics.h"
+
+REDIRECT_TICK_FUNC_IMPLEMENTATION(ACoverSystem)
 
 // Sets default values
 ACoverSystem::ACoverSystem()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 }
 
-const TArray<class ACoverVolume*>& ACoverSystem::GetAllCoverVolumes() const
+const TArray<ACoverVolume*>& ACoverSystem::GetAllCoverVolumes() const
 {
 	return AllCoverVolumes;
 }
@@ -35,4 +37,8 @@ void ACoverSystem::BeginPlay()
 			}
 		}
 	}
+}
+
+void ACoverSystem::InvasionTick_Implementation(float DeltaTime)
+{
 }

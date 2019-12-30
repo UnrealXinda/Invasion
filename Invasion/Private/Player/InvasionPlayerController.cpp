@@ -8,6 +8,7 @@
 
 #include "Characters/InvasionPlayerCharacter.h"
 #include "Weapons/InvasionWeapon.h"
+#include "Actors/CoverVolume.h"
 
 #include "InvasionGameplayStatics.h"
 
@@ -26,6 +27,12 @@ AInvasionPlayerController::AInvasionPlayerController()
 
 	ViewPitchMin = -90.0f;
 	ViewPitchMax = 90.0f;
+
+	CoverViewYawMin = -45.0f;
+	CoverViewYawMax = 45.0f;
+
+	DefaultViewYawMin = 0.0f;
+	DefaultViewYawMax = 359.999f;
 
 	PlayerCameraManagerClass = AInvasionPlayerCameraManager::StaticClass();
 }
@@ -63,6 +70,10 @@ void AInvasionPlayerController::SetupInputComponent()
 
 	// Face button actions
 	InputComponent->BindAction(InvasionStatics::Dash, IE_Pressed, this, &AInvasionPlayerController::OnPressDash);
+	InputComponent->BindAction(InvasionStatics::TakeCover, IE_Pressed, this, &AInvasionPlayerController::OnPressTakeCover);
+	InputComponent->BindAction(InvasionStatics::Execute, IE_Pressed, this, &AInvasionPlayerController::OnPressExecute);
+
+	// Left shoulder button actions
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Pressed, this, &AInvasionPlayerController::OnPressSprint);
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Released, this, &AInvasionPlayerController::OnReleaseSprint);
 
@@ -123,6 +134,20 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 
 		MoveDirection = GetWorldInputVector();
 		NormalizedSpeed = 1.0f;
+
+		// Cannot move outside of cover
+		if (PlayerCharacter->CoverState == ECoverState::InCover)
+		{
+			bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
+			bool bMovingRight = LastMovementInputVector.Y > 0.0f;
+			bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
+			bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
+
+			if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
+			{
+				NormalizedSpeed = 0.0f;
+			}
+		}
 	}
 
 	// Reset move state to normal jog
@@ -190,12 +215,59 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 			InvasionPlayerCameraManager->ViewPitchMax = MaxPitch;
 		}
 
+		// Update view min/max yaw value
+		{
+			if (PlayerCharacter->CoverState == ECoverState::Idle)
+			{
+				PlayerCameraManager->ViewYawMin = DefaultViewYawMin;
+				PlayerCameraManager->ViewYawMax = DefaultViewYawMax;
+			}
+
+			// Is taking cover
+			else
+			{
+				ACoverVolume* CurrentCover = PlayerCharacter->CurrentCoverVolume;
+
+				if (CurrentCover)
+				{
+					float CoverYaw = CurrentCover->GetActorRotation().Yaw;
+
+					if (PlayerCharacter->AimState == EAimState::Idle)
+					{
+						PlayerCameraManager->ViewYawMin = FRotator::ClampAxis(CoverYaw + CoverViewYawMin);
+						PlayerCameraManager->ViewYawMax = FRotator::ClampAxis(CoverYaw + CoverViewYawMax);
+					}
+					else
+					{
+						switch (CurrentCover->CoverType)
+						{
+						case ECoverType::Low:
+							PlayerCameraManager->ViewYawMin = FRotator::ClampAxis(CoverYaw + CurrentCover->AimingYawMin);
+							PlayerCameraManager->ViewYawMax = FRotator::ClampAxis(CoverYaw + CurrentCover->AimingYawMax);
+							break;
+						case ECoverType::High:
+							if (CurrentCover->HasActorReachedLeftEdge(PlayerCharacter))
+							{
+								PlayerCameraManager->ViewYawMin = FRotator::ClampAxis(CoverYaw + CurrentCover->AimingYawMin);
+								PlayerCameraManager->ViewYawMax = FRotator::ClampAxis(CoverYaw + CurrentCover->AimingYawMax);
+							}
+							else if (CurrentCover->HasActorReachedRightEdge(PlayerCharacter))
+							{
+								PlayerCameraManager->ViewYawMin = FRotator::ClampAxis(CoverYaw - CurrentCover->AimingYawMax);
+								PlayerCameraManager->ViewYawMax = FRotator::ClampAxis(CoverYaw - CurrentCover->AimingYawMin);
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		// Play camera shake when sprinting
 		{
 			bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
-			bool bHasCameraShakeClass = !!SprintCameraShakeClass;
 
-			if (bIsSprinting && bHasCameraShakeClass)
+			if (bIsSprinting && SprintCameraShakeClass)
 			{
 				const float kMaxSpeed = 600.0f;
 				float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
@@ -266,7 +338,7 @@ void AInvasionPlayerController::LookUpAtRate(float Rate)
 
 void AInvasionPlayerController::OnPressDash()
 {
-	if (PlayerCharacter->CanDash())
+	if (PlayerCharacter && PlayerCharacter->CanDash())
 	{
 		FRotator DashDirection;
 
@@ -289,6 +361,34 @@ void AInvasionPlayerController::OnPressDash()
 		}
 
 		PlayerCharacter->Dash(DashDirection);
+	}
+}
+
+void AInvasionPlayerController::OnPressTakeCover()
+{
+	if (PlayerCharacter)
+	{
+		switch (PlayerCharacter->CoverState)
+		{
+		case ECoverState::Idle:
+			if (PlayerCharacter->CanTakeCover())
+			{
+				PlayerCharacter->TryTakeCover();
+			}
+			break;
+
+		case ECoverState::InCover:
+			PlayerCharacter->TryUntakeCover();
+			break;
+		}
+	}
+}
+
+void AInvasionPlayerController::OnPressExecute()
+{
+	if (PlayerCharacter && PlayerCharacter->CanExecute())
+	{
+		PlayerCharacter->ExecuteCharacter(nullptr);
 	}
 }
 
@@ -317,22 +417,29 @@ void AInvasionPlayerController::OnReleaseAim()
 	{
 		PlayerCharacter->AimState = EAimState::Idle;
 		PlayerCharacter->bUseControllerRotationYaw = false;
+
+		// If taking cover, reorient the character to align with the cover rotation
+		if (PlayerCharacter->CoverState == ECoverState::InCover)
+		{
+			ACoverVolume* CurrentCover = PlayerCharacter->CurrentCoverVolume;
+			PlayerCharacter->SetActorRotation(CurrentCover->GetActorRotation());
+		}
 	}
 }
 
 void AInvasionPlayerController::OnPressFire()
 {
-	if (PlayerCharacter && PlayerCharacter->CanFire() && PlayerCharacter->CurrentWeapon)
+	if (PlayerCharacter && PlayerCharacter->CanFire())
 	{
-		PlayerCharacter->CurrentWeapon->StartFire();
+		PlayerCharacter->StartFire();
 	}
 }
 
 void AInvasionPlayerController::OnReleaseFire()
 {
-	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
+	if (PlayerCharacter)
 	{
-		PlayerCharacter->CurrentWeapon->StopFire();
+		PlayerCharacter->StopFire();
 	}
 }
 
@@ -352,7 +459,7 @@ FVector AInvasionPlayerController::GetWorldInputVector() const
 	return UKismetMathLibrary::GetForwardVector(GetWorldInputRotation());
 }
 
-bool AInvasionPlayerController::IsActionKeyDown(FName ActionName)
+bool AInvasionPlayerController::IsActionKeyDown(FName ActionName) const
 {
 	bool bIsKeyDown = false;
 	const TArray<FInputActionKeyMapping>& KeyMapping = PlayerInput->GetKeysForAction(ActionName);

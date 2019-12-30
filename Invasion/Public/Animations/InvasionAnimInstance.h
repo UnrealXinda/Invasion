@@ -35,11 +35,41 @@ public:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
 	EAimState AimState;
 
+	/** The cover state of the character */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
+	ECoverState CoverState;
+
+	/** The cover type of the cover the character is taking, if any */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)
+	ECoverType CoverType;
+
+	/** The last movement direction of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EMoveDirection LastMovementDir;
+
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
 
 protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FVector LeftFootEffectorLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FVector RightFootEffectorLoc;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FVector JointTargetLeft;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FVector JointTargetRight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FRotator LeftFootRot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "IK")
+	FRotator RightFootRot;
 
 	/** The aim pitch of the character, used for aim offset */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States)

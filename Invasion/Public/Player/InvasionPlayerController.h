@@ -76,6 +76,12 @@ public:
 	/** Called for dashing in current input direction */
 	void OnPressDash();
 
+	/** Called when attempting to take cover */
+	void OnPressTakeCover();
+
+	/** Called when attempting to execute */
+	void OnPressExecute();
+
 	/** Called when sprint button pressed down */
 	void OnPressSprint();
 
@@ -104,19 +110,35 @@ public:
 
 	/** Returns true if the given action key is pressed down */
 	UFUNCTION(BlueprintCallable)
-	bool IsActionKeyDown(FName ActionName);
+	bool IsActionKeyDown(FName ActionName) const;
 
 protected:
 
 	/** Minimum view pitch value */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = -90.0, ClampMax = 90.0))
 	float ViewPitchMin;
 
 	/** Maximum view pitch value */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (ClampMin = -90.0, ClampMax = 90.0))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = -90.0, ClampMax = 90.0))
 	float ViewPitchMax;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = CameraShake)
+	/** Default minimum view yaw value */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = 0.0, ClampMax = 360.0))
+	float DefaultViewYawMin;
+
+	/** Default maximum view pitch value */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = 0.0, ClampMax = 360.0))
+	float DefaultViewYawMax;
+
+	/** minimum view yaw value when taking cover (not aiming) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = -90.0, ClampMax = 0.0))
+	float CoverViewYawMin;
+
+	/** maximum view yaw value when taking cover (not aiming) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Camera, meta = (ClampMin = 0.0, ClampMax = 90.0))
+	float CoverViewYawMax;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
 	TSubclassOf<class UCameraShake> SprintCameraShakeClass;
 
 	/** Cached AInvasionPlayerCharacter type instance to avoid casting when try to access the controlled pawn */

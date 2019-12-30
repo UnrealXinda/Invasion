@@ -7,6 +7,7 @@
 #include "InvasionGameMode.generated.h"
 
 class ATimeDilationSystem;
+class ACoverSystem;
 
 UCLASS()
 class INVASION_API AInvasionGameMode : public AGameModeBase
@@ -19,6 +20,8 @@ public:
 
 	ATimeDilationSystem* GetTimeDilationSystem() const;
 
+	ACoverSystem* GetCoverSystem() const;
+
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 protected:
@@ -26,10 +29,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
 	TSubclassOf<ATimeDilationSystem> TimeDilationSystemClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
+	TSubclassOf<ACoverSystem> CoverSystemClass;
+
 #pragma region System Runtime Instances
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Systems)
 	ATimeDilationSystem* TimeDilationSystem;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Systems)
+	ACoverSystem* CoverSystem;
 
 #pragma endregion System Runtime Instances
 

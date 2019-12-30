@@ -48,6 +48,18 @@ public:
 	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
 	static class ATimeDilationSystem* GetTimeDilationSystem(const UObject* WorldContextObject);
 
+	/** Returns the pointer to the time dilation system if any */
+	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
+	static class ACoverSystem* GetCoverSystem(const UObject* WorldContextObject);
+
 #pragma endregion Systems
+
+#pragma region Miscellaneous
+
+	/** Check to see if a given angle is inside the range of the smaller angle formed by two angles */
+	UFUNCTION(BlueprintPure, Category = Miscellaneous)
+	static bool IsAngleInsideRange(float Angle, float Min, float Max);
+
+#pragma endregion Miscellaneous
 
 };

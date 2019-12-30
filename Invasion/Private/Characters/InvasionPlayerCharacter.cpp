@@ -13,6 +13,7 @@
 #include "GameFramework/SpringArmComponent.h"
 
 #include "Weapons/InvasionWeapon.h"
+#include "Actors/CoverVolume.h"
 
 #include "Camera/CameraComponent.h"
 
@@ -46,6 +47,7 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	DashState = EDashState::Idle;
+	ExecuteState = EExecuteState::Idle;
 
 	TargetMovementDir = FVector::ZeroVector;
 	NormalizedSpeed = 0.0f;
@@ -69,14 +71,37 @@ bool AInvasionPlayerCharacter::CanDash() const
 {
 	bool bIsAiming = AimState == EAimState::Aiming;
 	bool bIsDashing = DashState == EDashState::Dashing;
+	bool bIsInCover = CoverState != ECoverState::Idle;
 	bool bCanMove = CanMove();
 
-	return !bIsAiming && !bIsDashing && bCanMove;
+	return !bIsAiming && !bIsDashing && !bIsInCover && bCanMove;
+}
+
+bool AInvasionPlayerCharacter::CanExecute() const
+{
+	return ExecuteState == EExecuteState::Idle;
 }
 
 bool AInvasionPlayerCharacter::CanMove() const
 {
-	return Super::CanMove();
+	bool bCanMove;
+
+	switch (CoverState)
+	{
+	case ECoverState::HighIn:
+	case ECoverState::HighOut:
+	case ECoverState::LowIn:
+	case ECoverState::LowOut:
+		bCanMove = false;
+		break;
+	case ECoverState::InCover:
+	case ECoverState::Idle:
+	default:
+		bCanMove = Super::CanMove();
+		break;
+	}
+
+	return bCanMove;
 }
 
 bool AInvasionPlayerCharacter::CanSprint() const
@@ -86,7 +111,19 @@ bool AInvasionPlayerCharacter::CanSprint() const
 
 bool AInvasionPlayerCharacter::CanAim() const
 {
-	return Super::CanAim();
+	bool bCanAim = Super::CanAim();
+
+	if (CoverState == ECoverState::InCover)
+	{
+		if (CurrentCoverVolume->CoverType == ECoverType::High)
+		{
+			bCanAim &= CurrentCoverVolume->HasActorReachedLeftEdge(this) || CurrentCoverVolume->HasActorReachedRightEdge(this);
+		}
+	}
+
+	bCanAim &= ExecuteState != EExecuteState::Executing;
+
+	return bCanAim;
 }
 
 bool AInvasionPlayerCharacter::CanFire() const
@@ -94,10 +131,39 @@ bool AInvasionPlayerCharacter::CanFire() const
 	return Super::CanFire();
 }
 
+bool AInvasionPlayerCharacter::CanTakeCover() const
+{
+	bool bCanTakeCover = Super::CanTakeCover();
+	bCanTakeCover &= AimState == EAimState::Idle;
+	bCanTakeCover &= DashState == EDashState::Idle;
+
+	return bCanTakeCover;
+}
+
+void AInvasionPlayerCharacter::StartFire()
+{
+	Super::StartFire();
+}
+
+void AInvasionPlayerCharacter::StopFire()
+{
+	Super::StopFire();
+}
+
 void AInvasionPlayerCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */)
 {
+	// TODO: check if taking cover to decide whether can move to given direction
+
 	NormalizedSpeed = ScaleValue;
 	TargetMovementDir = WorldDirection;
+
+	if (NormalizedSpeed > 0.0F)
+	{
+		FVector ForwardDir = GetActorForwardVector();
+		float Z = (WorldDirection ^ ForwardDir).Z;
+
+		LastMovementDir = (Z > 0.0f) ? EMoveDirection::Left : EMoveDirection::Right;
+	}
 }
 
 void AInvasionPlayerCharacter::Dash(FRotator Direction)
@@ -109,3 +175,9 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 		PlayAnimMontage(DashMontage);
 	}
 }
+
+void AInvasionPlayerCharacter::ExecuteCharacter_Implementation(AInvasionCharacter* Victim)
+{
+
+}
+

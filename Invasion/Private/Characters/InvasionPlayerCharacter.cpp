@@ -4,6 +4,7 @@
 #include "Characters/InvasionPlayerCharacter.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #include "Animation/AnimMontage.h"
 
@@ -166,6 +167,32 @@ void AInvasionPlayerCharacter::MoveCharacter(FVector WorldDirection, float Scale
 	}
 }
 
+bool AInvasionPlayerCharacter::EquipWeapon(AInvasionWeapon* Weapon)
+{
+	bool bEquipped = Super::EquipWeapon(Weapon);
+
+	if (bEquipped)
+	{
+		CurrentWeapon->OnWeaponFire.AddDynamic(this, &AInvasionPlayerCharacter::OnWeaponFire);
+	}
+
+	return bEquipped;
+}
+
+
+
+bool AInvasionPlayerCharacter::UnequipWeapon(AInvasionWeapon* Weapon)
+{
+	bool bUnequipped = Super::UnequipWeapon(Weapon);
+
+	if (bUnequipped)
+	{
+		Weapon->OnWeaponFire.RemoveDynamic(this, &AInvasionPlayerCharacter::OnWeaponFire);
+	}
+
+	return bUnequipped;
+}
+
 void AInvasionPlayerCharacter::Dash(FRotator Direction)
 {
 	SetActorRotation(Direction);
@@ -174,6 +201,11 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 	{
 		PlayAnimMontage(DashMontage);
 	}
+}
+
+void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
+{
+
 }
 
 void AInvasionPlayerCharacter::ExecuteCharacter_Implementation(AInvasionCharacter* Victim)

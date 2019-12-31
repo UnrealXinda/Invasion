@@ -47,12 +47,9 @@ void AInvasionCharacter::BeginPlay()
 	// Spawn a weapon
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	CurrentWeapon = GetWorld()->SpawnActor<AInvasionWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+	AInvasionWeapon* Weapon = GetWorld()->SpawnActor<AInvasionWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
 
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->EquipWeapon(this, GetMesh(), WeaponSocketName);
-	}
+	EquipWeapon(Weapon);
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleEndOverlap);
@@ -182,6 +179,34 @@ void AInvasionCharacter::StopFire()
 	}
 }
 
+bool AInvasionCharacter::EquipWeapon(class AInvasionWeapon* Weapon)
+{
+	if (Weapon && Weapon != CurrentWeapon)
+	{
+		Weapon->EquipWeapon(this, GetMesh(), WeaponSocketName);
+		Weapon->OnWeaponFire.AddDynamic(this, &AInvasionCharacter::OnWeaponFire_Internal);
+		CurrentWeapon = Weapon;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool AInvasionCharacter::UnequipWeapon(class AInvasionWeapon* Weapon)
+{
+	if (Weapon && Weapon == CurrentWeapon)
+	{
+		Weapon->UnequipWeapon();
+		Weapon->OnWeaponFire.RemoveDynamic(this, &AInvasionCharacter::OnWeaponFire_Internal);
+		CurrentWeapon = nullptr;
+
+		return true;
+	}
+
+	return false;
+}
+
 void AInvasionCharacter::OnCapsuleBeginOverlap(
 	UPrimitiveComponent* OverlappedComp,
 	AActor*              OtherActor,
@@ -213,6 +238,28 @@ void AInvasionCharacter::OnCapsuleEndOverlap(
 		if (OtherComp == CoverVolume->GetCoverComponent())
 		{
 			AvailableCoverVolumes.RemoveSwap(CoverVolume);
+		}
+	}
+}
+
+void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AController* InstigatedBy)
+{
+	if (Weapon && Weapon == CurrentWeapon)
+	{
+		const FWeaponAnimation* WeaponAnimation = WeaponAnimations.FindByPredicate([Weapon](FWeaponAnimation Anim)
+		{
+			return Anim.WeaponType == Weapon->WeaponType;
+		});
+
+		if (WeaponAnimation && WeaponAnimation->FireMontage)
+		{
+			if (USkeletalMeshComponent* Mesh = GetMesh())
+			{
+				if (UInvasionAnimInstance* AnimInstance = Cast<UInvasionAnimInstance>(Mesh->GetAnimInstance()))
+				{
+					AnimInstance->Montage_Play(WeaponAnimation->FireMontage);
+				}
+			}
 		}
 	}
 }

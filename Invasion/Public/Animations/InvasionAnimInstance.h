@@ -17,8 +17,6 @@ class INVASION_API UInvasionAnimInstance : public UAnimInstance
 
 public:
 
-	UInvasionAnimInstance();
-
 	/** The normalized movement speed */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = States, meta = (ClampMin = 0.0, ClampMax = 1.0))
 	float NormalizedSpeed;
@@ -46,6 +44,17 @@ public:
 	/** The last movement direction of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EMoveDirection LastMovementDir;
+
+public:
+
+	UInvasionAnimInstance();
+
+	/** Stops currently playing slot animation slot or all*/
+	// This is a fix for UAnimInstance's StopSlotAnimation function.
+	// Instead of editing the engine code, I simply re-implement the function here since all
+	// variables are public.
+	UFUNCTION(BlueprintCallable, Category = "Animation")
+	void StopAnimationOnSlot(float InBlendOutTime = 0.25f, FName SlotNodeName = NAME_None);
 
 	virtual void NativeInitializeAnimation() override;
 

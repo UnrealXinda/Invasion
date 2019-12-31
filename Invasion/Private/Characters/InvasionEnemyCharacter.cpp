@@ -29,6 +29,4 @@ void AInvasionEnemyCharacter::MoveCharacter(FVector WorldDirection, float ScaleV
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 		break;
 	}
-
-	AddMovementInput(WorldDirection, ScaleValue);
 }

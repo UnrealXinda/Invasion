@@ -55,6 +55,10 @@ class INVASION_API AInvasionWeapon : public AActor
 
 public:
 
+	/** Type of the weapon */
+	UPROPERTY(EditDefaultsOnly, Category = Weapon)
+	EWeaponType WeaponType;
+
 	/** FOV when aiming */
 	UPROPERTY(EditDefaultsOnly, Category = Weapon)
 	FZoomInfo ZoomInfo;

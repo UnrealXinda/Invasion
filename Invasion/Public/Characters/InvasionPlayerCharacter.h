@@ -65,7 +65,7 @@ protected:
 	class UAnimMontage* DashMontage;
 
 public:
-	
+
 	UFUNCTION(BlueprintNativeEvent)
 	void ExecuteCharacter(AInvasionCharacter* Victim);
 
@@ -91,8 +91,24 @@ public:
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */) override;
 
+	virtual bool EquipWeapon(class AInvasionWeapon* Weapon) override;
+
+	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon) override;
+
 	void Dash(FRotator Direction);
 
 protected:
 
+	UFUNCTION()
+	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComp,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	) override;
+
+	virtual void BeginPlay() override;
 };

@@ -80,6 +80,14 @@ enum class ECoverType : uint8
 	Max  = 2,
 };
 
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	Rifle           = 0  UMETA(DisplayName = "Rifle"),
+	GrenadeLauncher = 1  UMETA(DisplayName = "Grenade Launcher"),
+	Max             = 2,
+};
+
 #pragma region Playback
 
 UENUM(BlueprintType)

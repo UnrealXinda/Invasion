@@ -10,6 +10,17 @@ UHealthComponent::UHealthComponent()
 }
 
 
+void UHealthComponent::Heal(float HealAmount)
+{
+	if (HealAmount > 0.0f)
+	{
+		float ActualHeal = FMath::Min(HealAmount, DefaultHealth - Health);
+		Health += ActualHeal;
+
+		OnHealthChanged.Broadcast(this, Health, ActualHeal, nullptr, nullptr, nullptr);
+	}
+}
+
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
 	AController* InstigatedBy, AActor* DamageCauser)
 {
@@ -18,7 +29,12 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 		float ActualDamage = FMath::Min(Damage, Health);
 		Health -= ActualDamage;
 
-		OnHealthChanged.Broadcast(this, Health, Damage, DamageType, InstigatedBy, DamageCauser);
+		OnHealthChanged.Broadcast(this, Health, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+
+		if (Health == 0.0f)
+		{
+			OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+		}
 	}
 }
 

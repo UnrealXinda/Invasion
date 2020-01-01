@@ -9,6 +9,20 @@
 #include "GameFramework/Character.h"
 #include "InvasionCharacter.generated.h"
 
+USTRUCT(BlueprintType)
+struct INVASION_API FWeaponAnimation
+{
+	GENERATED_BODY()
+
+	/** The type of the weapon */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EWeaponType WeaponType;
+
+	/** Animation montage to play when firing the weapon */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	class UAnimMontage* FireMontage;
+};
+
 UCLASS()
 class INVASION_API AInvasionCharacter : public ACharacter, public IInvasionTick
 {
@@ -84,6 +98,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void StopFire();
 
+	UFUNCTION(BlueprintCallable)
+	virtual bool EquipWeapon(class AInvasionWeapon* Weapon);
+
+	UFUNCTION(BlueprintCallable)
+	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon);
+
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 
 	virtual bool TryTakeCover();
@@ -94,16 +114,29 @@ public:
 
 protected:
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+	TArray<FWeaponAnimation> WeaponAnimations;
+
 	/** The current cover volume that the character is taking */
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Cover)
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Cover)
 	TArray<class ACoverVolume*> AvailableCoverVolumes;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Components)
 	class UIKComponent* IKComp;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Components)
+	class UHealthComponent* HealthComp;
+
+	/** The animation used for death (stance) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Animations)
+	class UAnimMontage* DeathMontage;
+
+	/** The animation used for death (cover) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Animations)
+	class UAnimMontage* CoverDeathMontage;
+
 protected:
 
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;	
 
 	UFUNCTION()
@@ -122,5 +155,27 @@ protected:
 		AActor*              OtherActor,
 		UPrimitiveComponent* OtherComp,
 		int32                OtherBodyIndex
+	);
+
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+private:
+
+	UFUNCTION()
+	void OnWeaponFire_Internal(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	UFUNCTION()
+	void OnCharacterDeath_Internal(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
 	);
 };

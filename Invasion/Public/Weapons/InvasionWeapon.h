@@ -46,7 +46,14 @@ struct FImpactEffect
 	class UParticleSystem* ImpactParticleEffect;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponFireSignature, class AInvasionWeapon*, Weapon, class AController*, InstigatedBy);
+/** Delegate type for callbacks when weapon fires */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnWeaponFireSignature,
+	/* The weapon that is firing */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this attack */
+	class AController*, InstigatedBy
+);
 
 UCLASS()
 class INVASION_API AInvasionWeapon : public AActor

@@ -58,6 +58,11 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	bAllowRootMotionRotation = true;
 }
 
+void AInvasionPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
 {
 	return FollowCamera->GetComponentLocation();
@@ -206,6 +211,17 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
 {
 
+}
+
+void AInvasionPlayerCharacter::OnCharacterDeath(
+	UHealthComponent*  HealthComp,
+	float              LastDamage,
+	const UDamageType* DamageType,
+	AController*       InstigatedBy,
+	AActor*            DamageCauser
+)
+{
+	Super::OnCharacterDeath(HealthComp, LastDamage, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionPlayerCharacter::ExecuteCharacter_Implementation(AInvasionCharacter* Victim)

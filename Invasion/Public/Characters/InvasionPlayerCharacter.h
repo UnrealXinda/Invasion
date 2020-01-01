@@ -101,4 +101,14 @@ protected:
 
 	UFUNCTION()
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComp,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	) override;
+
+	virtual void BeginPlay() override;
 };

@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/IKComponent.h"
+#include "Components/HealthComponent.h"
 
 #include "Weapons/InvasionWeapon.h"
 #include "Actors/CoverVolume.h"
@@ -24,6 +25,7 @@ AInvasionCharacter::AInvasionCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	IKComp = CreateDefaultSubobject<UIKComponent>(TEXT("IK Component"));
+	HealthComp = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Component"));
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = false;
 
@@ -53,6 +55,8 @@ void AInvasionCharacter::BeginPlay()
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleBeginOverlap);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleEndOverlap);
+
+	HealthComp->OnCharacterDeath.AddDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
 }
 
 void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
@@ -255,11 +259,55 @@ void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AControl
 		{
 			if (USkeletalMeshComponent* Mesh = GetMesh())
 			{
-				if (UInvasionAnimInstance* AnimInstance = Cast<UInvasionAnimInstance>(Mesh->GetAnimInstance()))
+				if (UAnimInstance* AnimInstance = Cast<UAnimInstance>(Mesh->GetAnimInstance()))
 				{
 					AnimInstance->Montage_Play(WeaponAnimation->FireMontage);
 				}
 			}
 		}
 	}
+}
+void AInvasionCharacter::OnCharacterDeath(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	const class UDamageType* DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StopFire();
+	}
+
+	UAnimMontage* MontageToPlay;
+
+	switch (CoverState)
+	{
+	case ECoverState::Idle:
+		MontageToPlay = DeathMontage;
+		break;
+	default:
+		MontageToPlay = CoverDeathMontage;
+		break;
+	}
+
+	GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
+
+	GetMovementComponent()->StopMovementImmediately();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	DetachFromControllerPendingDestroy();
+}
+
+void AInvasionCharacter::OnCharacterDeath_Internal(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	const class UDamageType* DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+	HealthComp->OnCharacterDeath.RemoveDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
 }

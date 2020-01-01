@@ -124,9 +124,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Components)
 	class UIKComponent* IKComp;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Components)
+	class UHealthComponent* HealthComp;
+
+	/** The animation used for death (stance) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Animations)
+	class UAnimMontage* DeathMontage;
+
+	/** The animation used for death (cover) */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Animations)
+	class UAnimMontage* CoverDeathMontage;
+
 protected:
 
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;	
 
 	UFUNCTION()
@@ -147,8 +157,25 @@ protected:
 		int32                OtherBodyIndex
 	);
 
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
 private:
 
 	UFUNCTION()
 	void OnWeaponFire_Internal(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	UFUNCTION()
+	void OnCharacterDeath_Internal(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 };

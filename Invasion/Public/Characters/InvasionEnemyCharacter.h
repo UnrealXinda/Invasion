@@ -6,6 +6,32 @@
 #include "Characters/InvasionCharacter.h"
 #include "InvasionEnemyCharacter.generated.h"
 
+USTRUCT(BlueprintType)
+struct FBreakableBoneEffect
+{
+	GENERATED_BODY()
+
+	/** The name of the bone that's breakable */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName BoneName;
+
+	/** The name of the socket that's attached to the main body */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName PrincipalSocketName;
+
+	/** The name of the socket that's attached to the broken bone */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName SubsidiarySocketName;
+
+	/** The particle effect that's attached to the principal socket */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AActor> PrincipalEffect;
+
+	/** The particle effect that's attached to the subsidiary socket */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AActor> SubsidiaryEffect;
+};
+
 /**
  * 
  */
@@ -28,12 +54,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxSprintSpeed;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Physics)
-	TArray<FName> BreakableBones;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Effects)
+	TArray<FBreakableBoneEffect> BreakableBoneEffects;
 	
 public:
 
 	AInvasionEnemyCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	bool TryBreakBone(FName InBoneName);
+
+	UFUNCTION(BlueprintPure)
+	bool IsBoneBroken(FName InBoneName) const;
 
 	float GetMaxWalkSpeed() const;
 

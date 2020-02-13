@@ -157,6 +157,17 @@ protected:
 		int32                OtherBodyIndex
 	);
 
+	virtual void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	virtual void OnHealthChanged(
+		class UHealthComponent*  HealthComponent,
+		float                    Health,
+		float                    HealthDelta,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
 	virtual void OnCharacterDeath(
 		class UHealthComponent*  HealthComponent,
 		float                    LastDamage,
@@ -169,6 +180,16 @@ private:
 
 	UFUNCTION()
 	void OnWeaponFire_Internal(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	UFUNCTION()
+	void OnHealthChanged_Internal(
+		class UHealthComponent*  HealthComponent,
+		float                    Health,
+		float                    HealthDelta,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 
 	UFUNCTION()
 	void OnCharacterDeath_Internal(

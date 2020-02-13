@@ -103,7 +103,7 @@ protected:
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
 
 	virtual void OnCharacterDeath(
-		class UHealthComponent*  HealthComp,
+		class UHealthComponent*  HealthComponent,
 		float                    LastDamage,
 		const class UDamageType* DamageType,
 		class AController*       InstigatedBy,

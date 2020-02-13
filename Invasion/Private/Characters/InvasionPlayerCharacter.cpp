@@ -210,18 +210,18 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 
 void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
 {
-
+	Super::OnWeaponFire(Weapon, InstigatedBy);
 }
 
 void AInvasionPlayerCharacter::OnCharacterDeath(
-	UHealthComponent*  HealthComp,
+	UHealthComponent*  HealthComponent,
 	float              LastDamage,
 	const UDamageType* DamageType,
 	AController*       InstigatedBy,
 	AActor*            DamageCauser
 )
 {
-	Super::OnCharacterDeath(HealthComp, LastDamage, DamageType, InstigatedBy, DamageCauser);
+	Super::OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionPlayerCharacter::ExecuteCharacter_Implementation(AInvasionCharacter* Victim)

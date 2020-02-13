@@ -246,11 +246,11 @@ void AInvasionCharacter::OnCapsuleEndOverlap(
 	}
 }
 
-void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AController* InstigatedBy)
+void AInvasionCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
 {
 	if (Weapon && Weapon == CurrentWeapon)
 	{
-		const FWeaponAnimation* WeaponAnimation = WeaponAnimations.FindByPredicate([Weapon](FWeaponAnimation Anim)
+		const FWeaponAnimation* WeaponAnimation = WeaponAnimations.FindByPredicate([Weapon](const FWeaponAnimation& Anim)
 		{
 			return Anim.WeaponType == Weapon->WeaponType;
 		});
@@ -267,10 +267,28 @@ void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AControl
 		}
 	}
 }
+
+void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AController* InstigatedBy)
+{
+	OnWeaponFire(Weapon, InstigatedBy);
+}
+
+void AInvasionCharacter::OnHealthChanged(
+	UHealthComponent*        HealthComp,
+	float                    Health,
+	float                    HealthDelta,
+	const UDamageType*       DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+
+}
+
 void AInvasionCharacter::OnCharacterDeath(
-	class UHealthComponent*  HealthComponent,
+	UHealthComponent*        HealthComponent,
 	float                    LastDamage,
-	const class UDamageType* DamageType,
+	const UDamageType*       DamageType,
 	class AController*       InstigatedBy,
 	AActor*                  DamageCauser
 )
@@ -298,6 +316,18 @@ void AInvasionCharacter::OnCharacterDeath(
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	DetachFromControllerPendingDestroy();
+}
+
+void AInvasionCharacter::OnHealthChanged_Internal(
+	UHealthComponent*        HealthComponent,
+	float                    Health,
+	float                    HealthDelta,
+	const UDamageType*       DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	OnHealthChanged(HealthComponent, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionCharacter::OnCharacterDeath_Internal(

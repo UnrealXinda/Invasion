@@ -4,6 +4,7 @@
 #include "Characters/InvasionPlayerCharacter.h"
 
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
 #include "Animation/AnimMontage.h"
@@ -17,10 +18,23 @@
 #include "Actors/CoverVolume.h"
 
 #include "Camera/CameraComponent.h"
+#include "Camera/CameraAnim.h"
+
+#include "Curves/CurveFloat.h"
+
+#include "InvasionGameplayStatics.h"
+#include "Game/InvasionGameMode.h"
 
 AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 {
 	TimeGroup = ETimeGroup::Player;
+
+	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComponent");
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComp->SetCollisionObjectType(ECC_Pawn);
+	SphereComp->SetCanEverAffectNavigation(false);
+	SphereComp->SetupAttachment(RootComponent);
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.F, 96.0F);
@@ -58,6 +72,17 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	bAllowRootMotionRotation = true;
 }
 
+void AInvasionPlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld()))
+	{
+		SphereComp->SetSphereRadius(GameMode->MaximumExecutionDistance);
+		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AInvasionPlayerCharacter::OnSphereBeginOverlap);
+	}
+}
+
 void AInvasionPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -71,6 +96,14 @@ FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
 void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
 {
 	Super::InvasionTick_Implementation(DeltaTime);
+}
+
+TArray<AActor*> AInvasionPlayerCharacter::GetExecutableCharacters() const
+{
+	TArray<AActor*> OverlappingActors;
+	SphereComp->GetOverlappingActors(OverlappingActors, TSubclassOf<AInvasionCharacter>());
+	OverlappingActors.RemoveAll([this](AActor* OverlappingActor) { return OverlappingActor == this; });
+	return OverlappingActors;
 }
 
 bool AInvasionPlayerCharacter::CanDash() const
@@ -184,8 +217,6 @@ bool AInvasionPlayerCharacter::EquipWeapon(AInvasionWeapon* Weapon)
 	return bEquipped;
 }
 
-
-
 bool AInvasionPlayerCharacter::UnequipWeapon(AInvasionWeapon* Weapon)
 {
 	bool bUnequipped = Super::UnequipWeapon(Weapon);
@@ -211,6 +242,17 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
 {
 	Super::OnWeaponFire(Weapon, InstigatedBy);
+}
+
+void AInvasionPlayerCharacter::OnSphereBeginOverlap(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor*              OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32                OtherBodyIndex,
+	bool                 bFromSweep,
+	const FHitResult&    SweepResult)
+{
+	// TODO: show on screen widget to imply availablity for execution
 }
 
 void AInvasionPlayerCharacter::OnCharacterDeath(

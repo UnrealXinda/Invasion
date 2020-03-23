@@ -110,7 +110,7 @@ public:
 
 	virtual bool TryUntakeCover();
 
-	FORCEINLINE class UIKComponent* GetIKComponent() const { return IKComp; }
+	FORCEINLINE class UIKComponent* GetIKComponent() const{ return IKComp; }
 
 protected:
 
@@ -175,6 +175,9 @@ protected:
 		class AController*       InstigatedBy,
 		AActor*                  DamageCauser
 	);
+
+	// Used for final cleanup
+	void OnCharacterKilled();
 
 private:
 

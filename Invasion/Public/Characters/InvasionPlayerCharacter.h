@@ -6,6 +6,24 @@
 #include "InvasionCharacter.h"
 #include "InvasionPlayerCharacter.generated.h"
 
+USTRUCT(BlueprintType)
+struct FExecutionDef
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName ExecutionName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UAnimMontage* ExecutionMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UCameraAnim* ExecutionCameraAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UCurveFloat* TimeDilationCurve;
+};
+
 /**
  * 
  */
@@ -46,25 +64,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float SprintRotationInterpSpeed;
 
-	virtual FVector GetPawnViewLocation() const override;
-
-	virtual void InvasionTick_Implementation(float DeltaTime) override;
-
-protected:
-
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
-
-	/** The animation montage used for dashing */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
-	class UAnimMontage* DashMontage;
+	/** The execution move info */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat)
+	TArray<FExecutionDef> ExecutionDefs;
 
 public:
+
+	UFUNCTION(BlueprintCallable)
+	TArray<AActor*> GetExecutableCharacters() const;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ExecuteCharacter(AInvasionCharacter* Victim);
@@ -95,12 +102,45 @@ public:
 
 	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon) override;
 
+	virtual FVector GetPawnViewLocation() const override;
+
+	virtual void InvasionTick_Implementation(float DeltaTime) override;
+
+	virtual void PostInitializeComponents() override;
+
 	void Dash(FRotator Direction);
+
+protected:
+
+	/** Camera boom positioning the camera behind the character */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;
+
+	/** Follow camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FollowCamera;
+
+	/** Sphere component used to detect overlapping enemy characters for execution */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* SphereComp;
+
+	/** The animation montage used for dashing */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
+	class UAnimMontage* DashMontage;
 
 protected:
 
 	UFUNCTION()
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	UFUNCTION()
+	void OnSphereBeginOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor*              OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32                OtherBodyIndex,
+		bool                 bFromSweep,
+		const FHitResult&    SweepResult);
 
 	virtual void OnCharacterDeath(
 		class UHealthComponent*  HealthComponent,

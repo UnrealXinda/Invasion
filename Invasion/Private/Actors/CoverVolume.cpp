@@ -34,20 +34,10 @@ ACoverVolume::ACoverVolume()
 
 bool ACoverVolume::HasActorReachedLeftEdge(const AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return false;
-	}
-
 	return LeftBlockVolumeComp->IsOverlappingActor(Actor);
 }
 
 bool ACoverVolume::HasActorReachedRightEdge(const AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return false;
-	}
-
 	return RightBlockVolumeComp->IsOverlappingActor(Actor);
 }

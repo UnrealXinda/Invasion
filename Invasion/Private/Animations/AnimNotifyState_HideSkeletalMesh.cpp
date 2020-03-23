@@ -11,7 +11,7 @@ void UAnimNotifyState_HideSkeletalMesh::NotifyBegin(USkeletalMeshComponent* Mesh
 {
 	if (MeshComp)
 	{
-		bCachedMeshVisibility = MeshComp->bVisible;
+		bCachedMeshVisibility = MeshComp->IsVisible();
 		MeshComp->SetVisibility(false);
 	}
 

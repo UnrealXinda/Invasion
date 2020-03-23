@@ -3,6 +3,8 @@
 
 #include "Characters/InvasionEnemyCharacter.h"
 
+#include "Animation/AnimMontage.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 
 AInvasionEnemyCharacter::AInvasionEnemyCharacter()
@@ -46,21 +48,33 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
 	return false;
 }
 
+void AInvasionEnemyCharacter::OnGettingExecuted_Implementation()
+{
+	// TODO: this is a bit redundant. Integrate execution kill halding into normal kill handling
+	OnCharacterKilled();
+}
+
 bool AInvasionEnemyCharacter::IsBoneBroken(FName InBoneName) const
 {
-	if (USkeletalMeshComponent* Mesh = GetMesh())
+	if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
 	{
-		int32 ConstraintIndex = Mesh->FindConstraintIndex(InBoneName);
+		int32 ConstraintIndex = SkeletalMesh->FindConstraintIndex(InBoneName);
 
 		if (ConstraintIndex != INDEX_NONE)
 		{
-			FConstraintInstance* Constraint = Mesh->Constraints[ConstraintIndex];
+			FConstraintInstance* Constraint = SkeletalMesh->Constraints[ConstraintIndex];
 			return Constraint->IsTerminated();
 		}
 	}
 
 	// By default, a non-existing constraint is broken
 	return true;
+}
+
+const FExecutedAnimDef& AInvasionEnemyCharacter::GetExecutedAnimDef(FName ExecutionName) const
+{
+	const FExecutedAnimDef* Def = ExecutedAnimDefs.FindByPredicate([ExecutionName](const FExecutedAnimDef& Def) { return Def.ExecutionName == ExecutionName; });
+	return Def ? *Def : ExecutedAnimDefs[0];
 }
 
 float AInvasionEnemyCharacter::GetMaxWalkSpeed() const

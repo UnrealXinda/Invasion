@@ -135,6 +135,17 @@ bool AInvasionCharacter::TryUntakeCover()
 	return false;
 }
 
+void AInvasionCharacter::OnCharacterKilled()
+{
+	HealthComp->OnCharacterDeath.RemoveDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
+	HealthComp->OnHealthChanged.RemoveDynamic(this, &AInvasionCharacter::OnHealthChanged_Internal);
+
+	GetMovementComponent()->StopMovementImmediately();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	DetachFromControllerPendingDestroy();
+}
+
 bool AInvasionCharacter::CanMove() const
 {
 	return true;
@@ -257,9 +268,9 @@ void AInvasionCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* Inst
 
 		if (WeaponAnimation && WeaponAnimation->FireMontage)
 		{
-			if (USkeletalMeshComponent* Mesh = GetMesh())
+			if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
 			{
-				if (UAnimInstance* AnimInstance = Cast<UAnimInstance>(Mesh->GetAnimInstance()))
+				if (UAnimInstance* AnimInstance = Cast<UAnimInstance>(SkeletalMesh->GetAnimInstance()))
 				{
 					AnimInstance->Montage_Play(WeaponAnimation->FireMontage);
 				}
@@ -274,7 +285,7 @@ void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AControl
 }
 
 void AInvasionCharacter::OnHealthChanged(
-	UHealthComponent*        HealthComp,
+	UHealthComponent*        HealthComponent,
 	float                    Health,
 	float                    HealthDelta,
 	const UDamageType*       DamageType,
@@ -311,11 +322,6 @@ void AInvasionCharacter::OnCharacterDeath(
 	}
 
 	GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
-
-	GetMovementComponent()->StopMovementImmediately();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	DetachFromControllerPendingDestroy();
 }
 
 void AInvasionCharacter::OnHealthChanged_Internal(
@@ -338,6 +344,6 @@ void AInvasionCharacter::OnCharacterDeath_Internal(
 	AActor*                  DamageCauser
 )
 {
+	OnCharacterKilled();
 	OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
-	HealthComp->OnCharacterDeath.RemoveDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
 }

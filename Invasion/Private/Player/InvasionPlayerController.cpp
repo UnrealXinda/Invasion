@@ -7,6 +7,7 @@
 #include "Player/InvasionPlayerCameraManager.h"
 
 #include "Characters/InvasionPlayerCharacter.h"
+#include "Characters/InvasionEnemyCharacter.h"
 #include "Weapons/InvasionWeapon.h"
 #include "Actors/CoverVolume.h"
 
@@ -388,7 +389,16 @@ void AInvasionPlayerController::OnPressExecute()
 {
 	if (PlayerCharacter && PlayerCharacter->CanExecute())
 	{
-		PlayerCharacter->ExecuteCharacter(nullptr);
+		TArray<AActor*> ExecutableCharacters = PlayerCharacter->GetExecutableCharacters();
+
+		if (ExecutableCharacters.Num() > 0)
+		{
+			// TODO: iterate through all characters to find the one closest to camera center
+			if (AInvasionEnemyCharacter* EnemyCharacter = Cast<AInvasionEnemyCharacter>(ExecutableCharacters[0]))
+			{
+				PlayerCharacter->ExecuteCharacter(EnemyCharacter);
+			}
+		}
 	}
 }
 

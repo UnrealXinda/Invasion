@@ -14,6 +14,11 @@ UCLASS()
 class INVASION_API AInvasionGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = 0.0), Category = "Combat Rules")
+	float MaximumExecutionDistance;
 	
 public:
 

@@ -38,7 +38,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(
 	AActor*, DamageCauser
 );
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Health), meta=(BlueprintSpawnableComponent))
 class INVASION_API UHealthComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -55,7 +55,11 @@ public:
 
 	UHealthComponent();
 
+	UFUNCTION(BlueprintCallable)
 	void Heal(float HealAmount);
+
+	UFUNCTION(BlueprintCallable)
+	void DealExecutionDamage(float DamageAmount);
 
 protected:
 

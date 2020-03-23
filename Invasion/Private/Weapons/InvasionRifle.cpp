@@ -171,7 +171,7 @@ void AInvasionRifle::SetWeaponVisibility(bool bVisible)
 
 bool AInvasionRifle::IsWeaponVisible() const
 {
-	return MeshComp->bVisible;
+	return MeshComp->IsVisible();
 }
 
 void AInvasionRifle::AddRecoilToController(APlayerController* Controller) const

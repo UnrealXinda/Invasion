@@ -21,6 +21,11 @@ void UHealthComponent::Heal(float HealAmount)
 	}
 }
 
+void UHealthComponent::DealExecutionDamage(float DamageAmount)
+{
+	Health = 0.0f;
+}
+
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
 	AController* InstigatedBy, AActor* DamageCauser)
 {

@@ -32,6 +32,24 @@ struct FBreakableBoneEffect
 	TSubclassOf<AActor> SubsidiaryEffect;
 };
 
+USTRUCT(BlueprintType)
+struct FExecutedAnimDef
+{
+	GENERATED_BODY()
+
+	/** The name of the execution. Used as key to pair with player's execution montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName ExecutionName;
+
+	/** The montage to play when getting executed */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UAnimMontage* ExecutedMontage;
+
+	/** Time delay to play executed montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Delay;
+};
+
 /**
  * 
  */
@@ -54,8 +72,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxSprintSpeed;
 
+	/** Effect definition for bone breaking effects */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Effects)
 	TArray<FBreakableBoneEffect> BreakableBoneEffects;
+
+	/** Serialized mapping between execution name and animation montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Effects)
+	TArray<FExecutedAnimDef> ExecutedAnimDefs;
 	
 public:
 
@@ -64,8 +87,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool TryBreakBone(FName InBoneName);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void OnGettingExecuted();
+
 	UFUNCTION(BlueprintPure)
 	bool IsBoneBroken(FName InBoneName) const;
+
+	UFUNCTION(BlueprintPure)
+	const FExecutedAnimDef& GetExecutedAnimDef(FName ExecutionName) const;
 
 	float GetMaxWalkSpeed() const;
 

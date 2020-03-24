@@ -76,21 +76,21 @@ void ATimeDilationSystem::PlayTimeDilationCurveOnGroup(
 	bool                                           bAffectLowerGroup /* = true */
 )
 {
-	uint8 GroupIndex = static_cast<uint8>(AffectedTimeGroup);
-	uint8 StartIndex = bAffectLowerGroup ? 0 : GroupIndex;
-	uint8 EndIndex = GroupIndex;
-
-	for (uint8 Index = StartIndex; Index <= EndIndex; ++Index)
+	if (!PlaybackCurve)
 	{
-		FTimeDilationState& State = TimeDilationStates[Index];
+		OnFinishedCallback.ExecuteIfBound(AffectedTimeGroup, EPlaybackFinishType::FailedToPlay);
+	}
 
-		if (!PlaybackCurve)
-		{
-			OnFinishedCallback.ExecuteIfBound(State.TimeGroup, EPlaybackFinishType::FailedToPlay);
-		}
+	else
+	{
+		uint8 GroupIndex = static_cast<uint8>(AffectedTimeGroup);
+		uint8 StartIndex = bAffectLowerGroup ? 0 : GroupIndex;
+		uint8 EndIndex = GroupIndex;
 
-		else
+		for (uint8 Index = StartIndex; Index <= EndIndex; ++Index)
 		{
+			FTimeDilationState& State = TimeDilationStates[Index];
+
 			if (State.CurrentTimeline.bIsPlaying)
 			{
 				switch (InterruptType)

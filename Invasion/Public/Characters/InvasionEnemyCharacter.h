@@ -25,11 +25,11 @@ struct FBreakableBoneEffect
 
 	/** The particle effect that's attached to the principal socket */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<AActor> PrincipalEffect;
+	TSubclassOf<class AInvasionParticle> PrincipalEffect;
 
 	/** The particle effect that's attached to the subsidiary socket */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<AActor> SubsidiaryEffect;
+	TSubclassOf<class AInvasionParticle> SubsidiaryEffect;
 };
 
 USTRUCT(BlueprintType)
@@ -94,7 +94,7 @@ public:
 	bool IsBoneBroken(FName InBoneName) const;
 
 	UFUNCTION(BlueprintPure)
-	const FExecutedAnimDef& GetExecutedAnimDef(FName ExecutionName) const;
+	FExecutedAnimDef GetExecutedAnimDef(FName ExecutionName) const;
 
 	float GetMaxWalkSpeed() const;
 

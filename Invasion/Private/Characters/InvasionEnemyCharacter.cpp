@@ -2,7 +2,7 @@
 
 
 #include "Characters/InvasionEnemyCharacter.h"
-
+#include "Actors/InvasionParticle.h"
 #include "Animation/AnimMontage.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
@@ -26,14 +26,14 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
 		{
 			GetMesh()->BreakConstraint(FVector::ZeroVector, FVector::ZeroVector, InBoneName);
 
-			auto SpawnEffect = [this](TSubclassOf<AActor> EffectClass, FName SocketToAttach)
+			auto SpawnEffect = [this](TSubclassOf<AInvasionParticle> EffectClass, FName SocketToAttach)
 			{
 				FActorSpawnParameters Params;
 				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 				if (EffectClass)
 				{
-					AActor* EffectActor = GetWorld()->SpawnActor<AActor>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+					AInvasionParticle* EffectActor = GetWorld()->SpawnActor<AInvasionParticle>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
 					EffectActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketToAttach);
 				}
 			};
@@ -71,10 +71,21 @@ bool AInvasionEnemyCharacter::IsBoneBroken(FName InBoneName) const
 	return true;
 }
 
-const FExecutedAnimDef& AInvasionEnemyCharacter::GetExecutedAnimDef(FName ExecutionName) const
+FExecutedAnimDef AInvasionEnemyCharacter::GetExecutedAnimDef(FName ExecutionName) const
 {
+	FExecutedAnimDef Result;
 	const FExecutedAnimDef* Def = ExecutedAnimDefs.FindByPredicate([ExecutionName](const FExecutedAnimDef& Def) { return Def.ExecutionName == ExecutionName; });
-	return Def ? *Def : ExecutedAnimDefs[0];
+
+	if (Def)
+	{
+		Result = *Def;
+	}
+	else if (ExecutedAnimDefs.Num() > 0)
+	{
+		Result = ExecutedAnimDefs[0];
+	}
+
+	return Result;
 }
 
 float AInvasionEnemyCharacter::GetMaxWalkSpeed() const

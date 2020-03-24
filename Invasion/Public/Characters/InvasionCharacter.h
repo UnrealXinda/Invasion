@@ -38,8 +38,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TimeGroup)
 	float InvasionTimeDilation = 1.0f;
 
-public:
-
 	/** The movement state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EMoveState MoveState;
@@ -74,7 +72,6 @@ public:
 
 public:
 
-	// Sets default values for this character's properties
 	AInvasionCharacter();
 
 	UFUNCTION(BlueprintPure)

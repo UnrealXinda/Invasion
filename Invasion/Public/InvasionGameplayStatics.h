@@ -7,6 +7,7 @@
 #include "UObject/NoExportTypes.h"
 #include "Invasion.h"
 #include "Systems/PostProcessSystem.h"
+#include "Systems/TimeDilationSystem.h"
 #include "InvasionGameplayStatics.generated.h"
 
 /**
@@ -49,7 +50,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
 	static class ATimeDilationSystem* GetTimeDilationSystem(const UObject* WorldContextObject);
 
-	/** Returns the pointer to the time dilation system if any */
+	/** Returns the pointer to the cover system if any */
 	UFUNCTION(BlueprintPure, Category = InvasionSystems, meta = (WorldContext = "WorldContextObject"))
 	static class ACoverSystem* GetCoverSystem(const UObject* WorldContextObject);
 
@@ -141,12 +142,31 @@ public:
 
 #pragma endregion Post Process System Helper
 
-#pragma region Miscellaneous
+#pragma region Time Dilation System Helper
 
-	/** Check to see if a given angle is inside the range of the smaller angle formed by two angles */
-	UFUNCTION(BlueprintPure, Category = Miscellaneous)
-	static bool IsAngleInsideRange(float Angle, float Min, float Max);
+	UFUNCTION(BlueprintCallable, Category = TimeDilationSystem, meta = (WorldContext = "WorldContextObject"))
+	static void PlayTimeDilationCurveOnGroup(
+		const UObject*                                 WorldContextObject,
+		UCurveFloat*                                   PlaybackCurve,
+		ETimeGroup                                     AffectedTimeGroup,
+		const FOnTimeDilationPlaybackFinishedDelegate& OnFinishedCallback,
+		EPlaybackInterruptType                         InterruptType = EPlaybackInterruptType::DropThis,
+		float                                          PlaybackRate = 1.0F,
+		bool                                           bAffectLowerGroup = true
+	);
 
-#pragma endregion Miscellaneous
+	UFUNCTION(BlueprintCallable, Category = TimeDilationSystem, meta = (WorldContext = "WorldContextObject"))
+	static void SetTimeDilationValueOnGroup(
+		const UObject*          WorldContextObject,
+		float                   TimeDilation,
+		ETimeGroup              AffectedTimeGroup,
+		EPlaybackInterruptType  InterruptType = EPlaybackInterruptType::Override,
+		bool                    bAffectLowerGroup = true
+	);
+
+	UFUNCTION(BlueprintPure, Category = TimeDilationSystem, meta = (WorldContext = "WorldContextObject"))
+	static float GetTimeDilation(const UObject* WorldContextObject, ETimeGroup TimeGroup);
+
+#pragma endregion Time Dilation System Helper
 
 };

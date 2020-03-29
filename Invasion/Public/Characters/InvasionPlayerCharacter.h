@@ -6,24 +6,6 @@
 #include "InvasionCharacter.h"
 #include "InvasionPlayerCharacter.generated.h"
 
-USTRUCT(BlueprintType)
-struct FExecutionDef
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName ExecutionName;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UAnimMontage* ExecutionMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UCameraAnim* ExecutionCameraAnim;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UCurveFloat* TimeDilationCurve;
-};
-
 /**
  * 
  */
@@ -63,10 +45,6 @@ public:
 	/** The rotation interpolation speed used for controlling character facing direction while sprinting */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float SprintRotationInterpSpeed;
-
-	/** The execution move info */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat)
-	TArray<FExecutionDef> ExecutionDefs;
 
 public:
 

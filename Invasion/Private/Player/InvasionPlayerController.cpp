@@ -107,62 +107,69 @@ void AInvasionPlayerController::MoveRight(float Value)
 
 void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
-	FVector MoveDirection = FVector::ZeroVector;
-	float NormalizedSpeed = 0.0f;
-	bool bCanMove = PlayerCharacter->CanMove();
-	bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
-
-	if (bCanMove && bHasInput)
+	// We are caching input vector and manually processing character movement. Therefore, we need to account for
+	// the case where input is disabled
+	if (PlayerCharacter && InputEnabled())
 	{
-		bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
-		bool bCanSprint = PlayerCharacter->CanSprint();
-		bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
+		FVector MoveDirection = FVector::ZeroVector;
+		float NormalizedSpeed = 0.0f;
+		bool bCanMove = PlayerCharacter->CanMove();
+		bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
 
-		if (bIsAiming)
+		if (bCanMove && bHasInput)
 		{
-			PlayerCharacter->MoveState = EMoveState::Walk;
+			bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
+			bool bCanSprint = PlayerCharacter->CanSprint();
+			bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
+
+			if (bIsAiming)
+			{
+				PlayerCharacter->MoveState = EMoveState::Walk;
+			}
+
+			else if (bCanSprint && bIsSprintKeyDown)
+			{
+				PlayerCharacter->MoveState = EMoveState::Sprint;
+			}
+
+			else
+			{
+				PlayerCharacter->MoveState = EMoveState::Run;
+			}
+
+			MoveDirection = GetWorldInputVector();
+			NormalizedSpeed = 1.0f;
+
+			// Cannot move outside of cover
+			if (PlayerCharacter->CoverState == ECoverState::InCover)
+			{
+				bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
+				bool bMovingRight = LastMovementInputVector.Y > 0.0f;
+				bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
+				bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
+
+				if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
+				{
+					NormalizedSpeed = 0.0f;
+				}
+			}
 		}
 
-		else if (bCanSprint && bIsSprintKeyDown)
-		{
-			PlayerCharacter->MoveState = EMoveState::Sprint;
-		}
-
+		// Reset move state to normal jog
 		else
 		{
 			PlayerCharacter->MoveState = EMoveState::Run;
 		}
 
-		MoveDirection = GetWorldInputVector();
-		NormalizedSpeed = 1.0f;
-
-		// Cannot move outside of cover
-		if (PlayerCharacter->CoverState == ECoverState::InCover)
-		{
-			bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
-			bool bMovingRight = LastMovementInputVector.Y > 0.0f;
-			bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
-			bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
-
-			if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
-			{
-				NormalizedSpeed = 0.0f;
-			}
-		}
+		PlayerCharacter->MoveCharacter(MoveDirection, NormalizedSpeed);
 	}
-
-	// Reset move state to normal jog
-	else
-	{
-		PlayerCharacter->MoveState = EMoveState::Run;
-	}
-
-	PlayerCharacter->MoveCharacter(MoveDirection, NormalizedSpeed);
 }
 
 void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
 {
-	if (PlayerCharacter)
+	// We are caching input vector and manually processing character movement. Therefore, we need to account for
+	// the case where input is disabled
+	if (PlayerCharacter && InputEnabled())
 	{
 		// Can only control character rotation if it is not driven by root motion, and if it is not controlled by 
 		// controller yaw.
@@ -199,6 +206,7 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 	if (PlayerCharacter)
 	{
 		// Update view min/max pitch value
+		auto TickViewPitchValue = [this]()
 		{
 			float MinPitch = ViewPitchMin;
 			float MaxPitch = ViewPitchMax;
@@ -212,11 +220,12 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 				MaxPitch = FMath::Min(MaxPitch, PlayerCharacter->CurrentWeapon->ZoomInfo.ZoomedPitchMax);
 			}
 
-			InvasionPlayerCameraManager->ViewPitchMin = MinPitch;
-			InvasionPlayerCameraManager->ViewPitchMax = MaxPitch;
-		}
+			PlayerCameraManager->ViewPitchMin = MinPitch;
+			PlayerCameraManager->ViewPitchMax = MaxPitch;
+		};
 
 		// Update view min/max yaw value
+		auto TickViewYawValue = [this]()
 		{
 			if (PlayerCharacter->CoverState == ECoverState::Idle)
 			{
@@ -262,20 +271,25 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 					}
 				}
 			}
-		}
+		};
 
 		// Play camera shake when sprinting
+		auto PlaySprintCameraShake = [this]()
 		{
 			bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
 
 			if (bIsSprinting && SprintCameraShakeClass)
 			{
-				const float kMaxSpeed = 600.0f;
+				float MaxSpeed = PlayerCharacter->GetCharacterMovement()->MaxWalkSpeed;
 				float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
-				float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / kMaxSpeed);
+				float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / MaxSpeed);
 				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
 			}
-		}
+		};
+
+		TickViewPitchValue();
+		TickViewYawValue();
+		PlaySprintCameraShake();
 	}
 }
 
@@ -283,28 +297,38 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 {
 	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
 	{
+		float NewFOV;
 		AInvasionWeapon* Weapon = PlayerCharacter->CurrentWeapon;
 
-		float TargetFOV;
-		float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
+		if (InputEnabled())
+		{
+			float TargetFOV;
+			float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
 
-		switch (PlayerCharacter->AimState)
-		{
-		case EAimState::Aiming:
-		{
-			TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
-			break;
-		}
-		case EAimState::Idle:
-		default:
-		{
-			TargetFOV = Weapon->ZoomInfo.DefaultFOV;
-			break;
-		}
+			switch (PlayerCharacter->AimState)
+			{
+			case EAimState::Aiming:
+			{
+				TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
+				break;
+			}
+			case EAimState::Idle:
+			default:
+			{
+				TargetFOV = Weapon->ZoomInfo.DefaultFOV;
+				break;
+			}
+			}
+
+			float CurrentFOV = PlayerCameraManager->GetFOVAngle();
+			NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
 		}
 
-		float CurrentFOV = PlayerCameraManager->GetFOVAngle();
-		float NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
+		else
+		{
+			NewFOV = Weapon->ZoomInfo.DefaultFOV;
+		}
+
 		PlayerCameraManager->SetFOV(NewFOV);
 	}
 }

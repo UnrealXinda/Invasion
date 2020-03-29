@@ -12,7 +12,7 @@ AInvasionEnemyCharacter::AInvasionEnemyCharacter()
 
 }
 
-bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
+bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName, FVector Inpulse, FVector HitLocation)
 {
 	if (!IsBoneBroken(InBoneName))
 	{
@@ -24,7 +24,7 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
 		// Found valid breakable bone
 		if (Effect)
 		{
-			GetMesh()->BreakConstraint(FVector::ZeroVector, FVector::ZeroVector, InBoneName);
+			GetMesh()->BreakConstraint(Inpulse, HitLocation, InBoneName);
 
 			auto SpawnEffect = [this](TSubclassOf<AInvasionParticle> EffectClass, FName SocketToAttach)
 			{

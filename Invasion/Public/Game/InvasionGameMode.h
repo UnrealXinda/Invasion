@@ -6,6 +6,32 @@
 #include "GameFramework/GameModeBase.h"
 #include "InvasionGameMode.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FExecutionScript
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName ExecutionName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FVector VictimStartLoc;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FTransform CameraStartTransform;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UAnimMontage* ExecutionMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UCameraAnim* ExecutionCameraAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UCurveFloat* TimeDilationCurve;
+};
+
+
 class ATimeDilationSystem;
 class ACoverSystem;
 class APostProcessSystem;
@@ -42,6 +68,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
 	TSubclassOf<APostProcessSystem> PostProcessSystemClass;
+
+	/** The execution move info */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Combat)
+	TArray<FExecutionScript> ExecutionScripts;
 
 #pragma region System Runtime Instances
 

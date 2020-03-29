@@ -85,7 +85,7 @@ public:
 	AInvasionEnemyCharacter();
 
 	UFUNCTION(BlueprintCallable)
-	bool TryBreakBone(FName InBoneName);
+	bool TryBreakBone(FName InBoneName, FVector Inpulse = FVector::ZeroVector, FVector HitLocation = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void OnGettingExecuted();

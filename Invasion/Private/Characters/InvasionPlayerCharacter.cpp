@@ -172,11 +172,9 @@ bool AInvasionPlayerCharacter::CanFire() const
 
 bool AInvasionPlayerCharacter::CanTakeCover() const
 {
-	bool bCanTakeCover = Super::CanTakeCover();
-	bCanTakeCover &= AimState == EAimState::Idle;
-	bCanTakeCover &= DashState == EDashState::Idle;
-
-	return bCanTakeCover;
+	return Super::CanTakeCover()
+		&& AimState == EAimState::Idle
+		&& DashState == EDashState::Idle;
 }
 
 void AInvasionPlayerCharacter::StartFire()

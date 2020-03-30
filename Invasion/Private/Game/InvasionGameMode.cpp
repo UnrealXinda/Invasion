@@ -10,6 +10,8 @@
 #include "Systems/PostProcessSystem.h"
 #include "Systems/CoverSystem.h"
 
+#include "Kismet/KismetMathLibrary.h"
+
 AInvasionGameMode::AInvasionGameMode()
 {
 	PlayerControllerClass = AInvasionPlayerController::StaticClass();
@@ -51,4 +53,12 @@ void AInvasionGameMode::InitGame(const FString& MapName, const FString& Options,
 	check(TimeDilationSystem);
 	check(CoverSystem);
 	check(PostProcessSystem);
+
+	check(ExecutionData);
+}
+
+const FExecutionScript& AInvasionGameMode::GetRandomExecutionScript() const
+{
+	int32 Index = UKismetMathLibrary::RandomIntegerInRange(0, ExecutionData->ExecutionScripts.Num() - 1);
+	return ExecutionData->ExecutionScripts[Index];
 }

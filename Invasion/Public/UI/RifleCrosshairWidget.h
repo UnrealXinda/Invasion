@@ -15,8 +15,8 @@ class INVASION_API URifleCrosshairWidget : public UCrosshairWidget
 	GENERATED_BODY()
 	
 public:
-	
-	UFUNCTION(BlueprintNativeEvent)
+
+	UFUNCTION()
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
 
 	virtual void NativeOnInitialized() override;
@@ -32,7 +32,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UCanvasPanel* CanvasPanel;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UImage* UpperLeftEdge;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Crosshair")
+	float CrosshairZoom;
 
+	UPROPERTY()
+	class AInvasionWeapon* Rifle;
 };

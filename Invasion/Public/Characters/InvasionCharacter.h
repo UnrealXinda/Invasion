@@ -75,6 +75,15 @@ public:
 	AInvasionCharacter();
 
 	UFUNCTION(BlueprintPure)
+	float GetDefaultHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentHealthPercentage() const;
+
+	UFUNCTION(BlueprintPure)
 	virtual bool CanMove() const;
 
 	UFUNCTION(BlueprintPure)
@@ -101,13 +110,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon);
 
-	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
-
+	UFUNCTION(BlueprintCallable)
 	virtual bool TryTakeCover();
 
+	UFUNCTION(BlueprintCallable)
 	virtual bool TryUntakeCover();
 
-	FORCEINLINE class UIKComponent* GetIKComponent() const{ return IKComp; }
+	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
+
+	FORCEINLINE class UIKComponent* GetIKComponent() const { return IKComp; }
 
 protected:
 

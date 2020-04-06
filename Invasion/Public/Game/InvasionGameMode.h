@@ -18,8 +18,17 @@ class INVASION_API AInvasionGameMode : public AGameModeBase
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = 0.0), Category = "Combat Rules")
+	/** Maximum distance between player and victim when trying to melee execute */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Game Settings")
 	float MaximumExecutionDistance;
+
+	/** Time before player can self recover health when taking damage */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Player Health Settings")
+	float TimeBeforeSelfRecover;
+
+	/** Health points recovered per second */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Player Health Settings")
+	float SelfRecoverPerSecond;
 	
 public:
 

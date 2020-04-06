@@ -87,6 +87,13 @@ void AInvasionPlayerController::SetupInputComponent()
 	InputComponent->BindAction(InvasionStatics::Fire, IE_Released, this, &AInvasionPlayerController::OnReleaseFire);
 }
 
+void AInvasionPlayerController::DisableInput(class APlayerController* PlayerController)
+{
+	Super::DisableInput(PlayerController);
+
+	LastMovementInputVector = FVector::ZeroVector;
+}
+
 void AInvasionPlayerController::InvasionTick_Implementation(float DeltaTime)
 {
 	TickCharacterMovement(DeltaTime);

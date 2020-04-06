@@ -44,6 +44,18 @@ struct FImpactEffect
 	/** The particle effect for this impact effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UParticleSystem* ImpactParticleEffect;
+
+	/** The sound to play when hitting the surface */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USoundBase* ImpactSound;
+
+	/** The volume multiplier of impact sound */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float VolumeMultiplier;
+
+	/** The pitch multiplier of impact sound */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float PitchMultiplier;
 };
 
 /** Delegate type for callbacks when weapon fires */
@@ -89,6 +101,14 @@ public:
 	/** The yaw input for recoil of this weapon, the range is [-RecoilYawMax, RecoilYawMax] */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
 	float RecoilYawMax;
+
+	/** The crosshair zoom in value increased per shot */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0, ClampMax = 1.0), Category = Weapon)
+	float CrosshairZoomInPerFire;
+
+	/** The crosshair spread recover rate */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+	float CrosshairZoomOutPerSecond;
 
 	/** The base damage of the weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)

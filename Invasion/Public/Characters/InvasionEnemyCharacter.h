@@ -85,6 +85,12 @@ public:
 	AInvasionEnemyCharacter();
 
 	UFUNCTION(BlueprintCallable)
+	bool TryStartAim();
+
+	UFUNCTION(BlueprintCallable)
+	bool TryEndAim();
+
+	UFUNCTION(BlueprintCallable)
 	bool TryBreakBone(FName InBoneName, FVector Inpulse = FVector::ZeroVector, FVector HitLocation = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
@@ -99,5 +105,10 @@ public:
 	float GetMaxWalkSpeed() const;
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F) override;
+
+protected:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	class UAIPerceptionComponent* AIPerceptionComp;
 
 };

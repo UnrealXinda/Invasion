@@ -88,6 +88,8 @@ public:
 
 	void Dash(FRotator Direction);
 
+	void Heal(float RecoverAmount);
+
 protected:
 
 	/** Camera boom positioning the camera behind the character */
@@ -106,6 +108,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	class UAnimMontage* DashMontage;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = States)
+	bool bCanSelfRecover;
+
+	FTimerHandle ResetSelfRecoverTimerHandle;
+
 protected:
 
 	UFUNCTION()
@@ -120,6 +127,17 @@ protected:
 		bool                 bFromSweep,
 		const FHitResult&    SweepResult);
 
+	UFUNCTION()
+	void EnableSelfRecover();
+
+	UFUNCTION()
+	void OnPlayerTakeAnyDamage(
+		AActor*                  DamagedActor,
+		float                    Damage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser);
+
 	virtual void OnCharacterDeath(
 		class UHealthComponent*  HealthComponent,
 		float                    LastDamage,
@@ -129,4 +147,6 @@ protected:
 	) override;
 
 	virtual void BeginPlay() override;
+
+	void RecoverHealth(float DeltaSeconds);
 };

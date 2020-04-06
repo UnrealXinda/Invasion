@@ -9,18 +9,21 @@
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 
+#include "Animation/AnimationAsset.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Curves/CurveFloat.h"
-#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+
+#include "InvasionGameplayStatics.h"
 
 AInvasionRifle::AInvasionRifle()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
-	RootComponent = MeshComp;
+	WeaponSkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponSkeletalMesh"));
+	RootComponent = WeaponSkeletalMesh;
 
 	TracerTargetName = "Target";
 	MuzzleSocketName = "MuzzleSocket";
@@ -71,83 +74,73 @@ void AInvasionRifle::Fire()
 {
 	if (AInvasionCharacter* OwnerPawn = Cast<AInvasionCharacter>(GetOwner()))
 	{
-		if (OwnerPawn->CanFire())
+		if (UWorld* World = GetWorld())
 		{
-			FVector EyeLocation;
-			FRotator EyeRotation;
-			OwnerPawn->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-
-			FVector ShotDirection;
-			FVector TraceStart, TraceEnd;
-			ShotDirection = EyeRotation.Vector();
-
-			// Add recoil to controller
-			if (APlayerController* PlayerController = Cast<APlayerController>(OwnerPawn->GetController()))
+			if (OwnerPawn->CanFire())
 			{
-				AddRecoilToController(PlayerController);
+				FVector TraceStart, TraceEnd;
+
+				// Get weapon trace for player controller
+				if (APlayerController* PlayerController = Cast<APlayerController>(OwnerPawn->GetController()))
+				{
+					GetWeaponTraceForPlayer(TraceStart, TraceEnd, OwnerPawn);
+					AddRecoilToController(PlayerController);
+				}
+
+				// Get weapon trace for AI controller
+				else
+				{
+					GetWeaponTraceForAI(TraceStart, TraceEnd, OwnerPawn);
+				}
+
+				FHitResult HitResult;
+				FCollisionQueryParams Params;
+				Params.AddIgnoredActor(OwnerPawn);
+				Params.AddIgnoredActor(this);
+				Params.bTraceComplex = true;
+				Params.bReturnPhysicalMaterial = true;
+
+				// Blocking hit! Processing damage
+				bool bHitTarget = World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Weapon, Params);
+
+				if (bHitTarget)
+				{
+					EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
+					float Damage = GetDamageAmountFromSurfaceType(SurfaceType);
+
+					AActor* HitActor = HitResult.GetActor();
+					AController* InstigatorController = OwnerPawn->GetInstigatorController();
+					FVector ShotDirection = TraceEnd - TraceStart;
+
+					UGameplayStatics::ApplyPointDamage(HitActor, Damage, ShotDirection, HitResult, InstigatorController, this, DamageType);
+
+					// Play impact effect
+					PlayImpactEffect(HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), SurfaceType);
+
+					// Modify the trace end for debug drawing
+					if (InvasionDebug::g_DebugDrawWeaponTrace)
+					{
+						TraceEnd = HitResult.ImpactPoint;
+					}
+				}
+
+				if (InvasionDebug::g_DebugDrawWeaponTrace)
+				{
+					FColor LineColor = bHitTarget ? FColor::Green : FColor::Red;
+					DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 1.0f);
+				}
+
+				// Play tracer effect
+				PlayTracerEffect(TraceEnd);
+
+				// Play fire effects
+				PlayFireEffects();
+
+				// Broadcast a successful fire event
+				BroadcastOnWeaponFire();
+
+				LastFireTime = World->TimeSeconds;
 			}
-			//// Randomize shot
-			//else
-			//{
-			//	// Apply bullet spread to shots
-			//	float RandomConeHalfRadian = FMath::DegreesToRadians(RandomConeHalfDegrees);
-			//	ShotDirection = FMath::VRandCone(ShotDirection, RandomConeHalfRadian, RandomConeHalfRadian);
-
-			//	TraceEnd = EyeLocation + TraceRangeMax * ShotDirection;
-			//}
-
-			// If we trace from the camera position, there's a slight chance of the ray hitting something behind the 
-			// character. Hence, we move the trace start position forward to the intersection between the ray and the
-			// plane on which the gun muzzle point sits and is orthogonal to the camera forward.
-			FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
-			FPlane Plane(MuzzleLocation, ShotDirection);
-
-			TraceStart = FMath::RayPlaneIntersection(EyeLocation, ShotDirection, Plane);
-			TraceEnd = TraceStart + TraceRangeMax * ShotDirection;
-
-			FHitResult HitResult;
-			FCollisionQueryParams Params;
-			Params.AddIgnoredActor(OwnerPawn);
-			Params.AddIgnoredActor(this);
-			Params.bTraceComplex = true;
-			Params.bReturnPhysicalMaterial = true;
-
-			// Blocking hit! Processing damage
-			bool bHitTarget = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Weapon, Params);
-
-			if (bHitTarget)
-			{
-				EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
-				float Damage = GetDamageAmountFromSurfaceType(SurfaceType);
-
-				AActor* HitActor = HitResult.GetActor();
-				AController* InstigatorController = OwnerPawn->GetInstigatorController();
-
-				UGameplayStatics::ApplyPointDamage(HitActor, Damage, ShotDirection, HitResult, InstigatorController, this, DamageType);
-
-				// Play impact effect
-				PlayImpactEffect(HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), SurfaceType);
-
-				// Modify the trace end for debug drawing
-				TraceEnd = HitResult.ImpactPoint;
-			}
-
-			if (InvasionDebug::g_DebugDrawWeaponTrace)
-			{
-				FColor LineColor = bHitTarget ? FColor::Green : FColor::Red;
-				DrawDebugLine(GetWorld(), TraceStart, TraceEnd, LineColor, false, 2.0f, 0, 1.0f);
-			}
-
-			// Play tracer effect
-			PlayTracerEffect(TraceEnd);
-
-			// Play fire effects
-			PlayFireEffects();
-
-			// Broadcast a successful fire event
-			BroadcastOnWeaponFire();
-
-			LastFireTime = GetWorld()->TimeSeconds;
 		}
 	}
 }
@@ -166,12 +159,12 @@ void AInvasionRifle::StopFire()
 
 void AInvasionRifle::SetWeaponVisibility(bool bVisible)
 {
-	MeshComp->SetVisibility(bVisible);
+	WeaponSkeletalMesh->SetVisibility(bVisible);
 }
 
 bool AInvasionRifle::IsWeaponVisible() const
 {
-	return MeshComp->IsVisible();
+	return WeaponSkeletalMesh->IsVisible();
 }
 
 void AInvasionRifle::AddRecoilToController(APlayerController* Controller) const
@@ -187,18 +180,24 @@ void AInvasionRifle::AddRecoilToController(APlayerController* Controller) const
 
 void AInvasionRifle::PlayFireEffects()
 {
-	// Play muzzle effect
 	PlayMuzzleEffect();
-
-	// Play camera shake effect
 	PlayCameraShakeEffect();
+	PlayFireAnimation();
+}
+
+void AInvasionRifle::PlayFireAnimation()
+{
+	if (FireAnimation)
+	{
+		WeaponSkeletalMesh->PlayAnimation(FireAnimation, false);
+	}
 }
 
 void AInvasionRifle::PlayMuzzleEffect()
 {
 	if (MuzzleEffect)
 	{
-		UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
+		UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, WeaponSkeletalMesh, MuzzleSocketName);
 	}
 }
 
@@ -211,12 +210,21 @@ void AInvasionRifle::PlayImpactEffect(FVector Location, FRotator Rotation, EPhys
 			return ImpactEffect.SurfaceType == Surface;
 		};
 
-		if (FImpactEffect* Effect = ImpactEffects.FindByPredicate(FindSurfaceTypePredicate))
+		if (UWorld* World = GetWorld())
 		{
-			if (UParticleSystem* SelectedEffect = Effect->ImpactParticleEffect)
+			if (FImpactEffect* Effect = ImpactEffects.FindByPredicate(FindSurfaceTypePredicate))
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, Location, Rotation);
-				return true;
+				if (UParticleSystem* SelectedEffect = Effect->ImpactParticleEffect)
+				{
+					UGameplayStatics::SpawnEmitterAtLocation(World, SelectedEffect, Location, Rotation);
+
+					if (USoundBase* ImpactSound = Effect->ImpactSound)
+					{
+						UGameplayStatics::PlaySoundAtLocation(World, ImpactSound, Location, Effect->VolumeMultiplier, Effect->PitchMultiplier);
+					}
+
+					return true;
+				}
 			}
 		}
 
@@ -233,7 +241,7 @@ void AInvasionRifle::PlayTracerEffect(FVector TargetPoint)
 {
 	if (TracerEffect)
 	{
-		FVector MuzzleLocation = MeshComp->GetSocketLocation(MuzzleSocketName);
+		FVector MuzzleLocation = WeaponSkeletalMesh->GetSocketLocation(MuzzleSocketName);
 
 		if (UParticleSystemComponent* ParticleComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TracerEffect, MuzzleLocation))
 		{
@@ -260,6 +268,56 @@ void AInvasionRifle::BroadcastOnWeaponFire()
 		if (AController* InstigatedBy = OwnerActor->GetController())
 		{
 			OnWeaponFire.Broadcast(this, InstigatedBy);
+		}
+	}
+}
+
+void AInvasionRifle::GetWeaponTraceForPlayer(FVector& TraceStart, FVector& TraceEnd, APawn* OwningPawn) const
+{
+	check(OwningPawn != nullptr);
+
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	OwningPawn->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector ShotDirection = EyeRotation.Vector();
+	FVector MuzzleLocation = WeaponSkeletalMesh->GetSocketLocation(MuzzleSocketName);
+
+	// If we trace from the camera position, there's a slight chance of the ray hitting something behind the 
+	// character. Hence, we move the trace start position forward to the intersection between the ray and the
+	// plane on which the gun muzzle point sits and is orthogonal to the camera forward.
+	FPlane Plane(MuzzleLocation, ShotDirection);
+
+	TraceStart = FMath::RayPlaneIntersection(EyeLocation, ShotDirection, Plane);
+	TraceEnd = TraceStart + TraceRangeMax * ShotDirection;
+}
+
+void AInvasionRifle::GetWeaponTraceForAI(FVector& TraceStart, FVector& TraceEnd, APawn* OwningPawn) const
+{
+	check(OwningPawn != nullptr);
+
+	if (UWorld* World = GetWorld())
+	{
+		if (AActor* TargetActor = UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
+		{
+			FVector EyeLocation;
+			FRotator EyeRotation;
+			OwningPawn->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+			FVector ShotDirection = EyeRotation.Vector();
+			FVector MuzzleLocation = WeaponSkeletalMesh->GetSocketLocation(MuzzleSocketName);
+
+			FVector OwingPawnLoc = OwningPawn->GetActorLocation();
+			FVector TargetActorLoc = TargetActor->GetActorLocation();
+
+			// Apply bullet spread to shots
+			float Distance = (OwingPawnLoc - TargetActorLoc).Size();
+			float RandomConeHalfDegrees = RandomConeHalfDegreesPerDistance->GetFloatValue(Distance);
+			float RandomConeHalfRadian = FMath::DegreesToRadians(RandomConeHalfDegrees);
+			ShotDirection = FMath::VRandCone(ShotDirection, RandomConeHalfRadian, RandomConeHalfRadian);
+
+			TraceStart = EyeLocation;
+			TraceEnd = TraceStart + TraceRangeMax * ShotDirection;
 		}
 	}
 }

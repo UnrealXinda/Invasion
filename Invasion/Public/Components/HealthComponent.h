@@ -49,7 +49,13 @@ public:
 	FOnHealthChangedSignature OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnCharacterDeathSignature OnCharacterDeath;
+	FOnCharacterDeathSignature OnCharacterDeath;	
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Health")
+	float Health;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
+	float DefaultHealth;
 
 public:	
 
@@ -68,13 +74,5 @@ protected:
 			class AController* InstigatedBy, AActor* DamageCauser);
 
 	virtual void BeginPlay() override;
-
-protected:
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Health")
-	float Health;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
-	float DefaultHealth;
 		
 };

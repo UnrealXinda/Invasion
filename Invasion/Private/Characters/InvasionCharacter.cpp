@@ -41,6 +41,21 @@ AInvasionCharacter::AInvasionCharacter()
 	CurrentCoverVolume = nullptr;
 }
 
+float AInvasionCharacter::GetDefaultHealth() const
+{
+	return HealthComp->DefaultHealth;
+}
+
+float AInvasionCharacter::GetCurrentHealth() const
+{
+	return HealthComp->Health;
+}
+
+float AInvasionCharacter::GetCurrentHealthPercentage() const
+{
+	return GetCurrentHealth() / GetDefaultHealth();
+}
+
 // Called when the game starts or when spawned
 void AInvasionCharacter::BeginPlay()
 {

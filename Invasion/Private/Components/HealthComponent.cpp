@@ -3,12 +3,10 @@
 
 #include "HealthComponent.h"
 
-// Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
 {
 	DefaultHealth = 100.0f;
 }
-
 
 void UHealthComponent::Heal(float HealAmount)
 {
@@ -34,7 +32,7 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 		float ActualDamage = FMath::Min(Damage, Health);
 		Health -= ActualDamage;
 
-		OnHealthChanged.Broadcast(this, Health, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+		OnHealthChanged.Broadcast(this, Health, -ActualDamage, DamageType, InstigatedBy, DamageCauser);
 
 		if (Health == 0.0f)
 		{
@@ -43,7 +41,6 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 	}
 }
 
-// Called when the game starts
 void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();

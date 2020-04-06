@@ -22,6 +22,9 @@ AInvasionGameMode::AInvasionGameMode()
 	PostProcessSystemClass = APostProcessSystem::StaticClass();
 
 	MaximumExecutionDistance = 150.0f;
+
+	TimeBeforeSelfRecover = 5.0f;
+	SelfRecoverPerSecond = 15.0f;
 }
 
 ATimeDilationSystem* AInvasionGameMode::GetTimeDilationSystem() const

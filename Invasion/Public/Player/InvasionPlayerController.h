@@ -35,6 +35,8 @@ public:
 
 	virtual void SetupInputComponent() override;
 
+	virtual void DisableInput(class APlayerController* PlayerController) override;
+
 #pragma region Movement
 
 	/** Called for forwards/backward input */

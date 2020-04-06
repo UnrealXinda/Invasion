@@ -76,16 +76,33 @@ void AInvasionPlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld()))
+	if (UWorld* World = GetWorld())
 	{
-		SphereComp->SetSphereRadius(GameMode->MaximumExecutionDistance);
-		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AInvasionPlayerCharacter::OnSphereBeginOverlap);
+		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld()))
+		{
+			SphereComp->SetSphereRadius(GameMode->MaximumExecutionDistance);
+			SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AInvasionPlayerCharacter::OnSphereBeginOverlap);
+		}
 	}
+	
+	OnTakeAnyDamage.AddDynamic(this, &AInvasionPlayerCharacter::OnPlayerTakeAnyDamage);
 }
 
 void AInvasionPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AInvasionPlayerCharacter::RecoverHealth(float DeltaSeconds)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(World))
+		{
+			float HealthRecovered = GameMode->SelfRecoverPerSecond * DeltaSeconds;
+			Heal(HealthRecovered);
+		}
+	}
 }
 
 FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
@@ -96,6 +113,11 @@ FVector AInvasionPlayerCharacter::GetPawnViewLocation() const
 void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
 {
 	Super::InvasionTick_Implementation(DeltaTime);
+
+	if (bCanSelfRecover)
+	{
+		RecoverHealth(DeltaTime);
+	}
 }
 
 TArray<AActor*> AInvasionPlayerCharacter::GetExecutableCharacters() const
@@ -189,8 +211,6 @@ void AInvasionPlayerCharacter::StopFire()
 
 void AInvasionPlayerCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /* = 1.0F */)
 {
-	// TODO: check if taking cover to decide whether can move to given direction
-
 	NormalizedSpeed = ScaleValue;
 	TargetMovementDir = WorldDirection;
 
@@ -230,11 +250,12 @@ bool AInvasionPlayerCharacter::UnequipWeapon(AInvasionWeapon* Weapon)
 void AInvasionPlayerCharacter::Dash(FRotator Direction)
 {
 	SetActorRotation(Direction);
+	PlayAnimMontage(DashMontage);
+}
 
-	if (DashMontage)
-	{
-		PlayAnimMontage(DashMontage);
-	}
+void AInvasionPlayerCharacter::Heal(float RecoverAmount)
+{
+	HealthComp->Heal(RecoverAmount);
 }
 
 void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
@@ -251,6 +272,31 @@ void AInvasionPlayerCharacter::OnSphereBeginOverlap(
 	const FHitResult&    SweepResult)
 {
 	// TODO: show on screen widget to imply availablity for execution
+}
+
+void AInvasionPlayerCharacter::EnableSelfRecover()
+{
+	bCanSelfRecover = true;
+}
+
+void AInvasionPlayerCharacter::OnPlayerTakeAnyDamage(
+	AActor*                  DamagedActor,
+	float                    Damage,
+	const class UDamageType* DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser)
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(World))
+		{
+			bCanSelfRecover = false;
+
+			float TimeBeforeSelfRecover = GameMode->TimeBeforeSelfRecover;
+			GetWorldTimerManager().ClearTimer(ResetSelfRecoverTimerHandle);
+			GetWorldTimerManager().SetTimer(ResetSelfRecoverTimerHandle, this, &AInvasionPlayerCharacter::EnableSelfRecover, TimeBeforeSelfRecover, false);
+		}
+	}
 }
 
 void AInvasionPlayerCharacter::OnCharacterDeath(

@@ -5,11 +5,36 @@
 #include "Actors/InvasionParticle.h"
 #include "Animation/AnimMontage.h"
 
+#include "Perception/AIPerceptionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AInvasionEnemyCharacter::AInvasionEnemyCharacter()
 {
+	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>("AIPerceptionComponent");
+}
 
+bool AInvasionEnemyCharacter::TryStartAim()
+{
+	bool bCanAim = CanAim();
+	if (bCanAim)
+	{
+		AimState = EAimState::Aiming;
+	}
+
+	return bCanAim;
+}
+
+bool AInvasionEnemyCharacter::TryEndAim()
+{
+	AimState = EAimState::Idle;
+
+	// If taking cover, reorient the character to align with the cover rotation
+	if (CoverState == ECoverState::InCover)
+	{
+		SetActorRotation(CurrentCoverVolume->GetActorRotation());
+	}
+
+	return true;
 }
 
 bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName, FVector Inpulse, FVector HitLocation)

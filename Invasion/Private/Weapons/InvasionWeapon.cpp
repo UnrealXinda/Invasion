@@ -2,6 +2,7 @@
 
 
 #include "Weapons/InvasionWeapon.h"
+#include "Weapons/WeaponDamageInfo.h"
 #include "Characters/InvasionPlayerCharacter.h"
 #include "Player/InvasionPlayerController.h"
 

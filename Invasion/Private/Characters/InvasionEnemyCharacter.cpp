@@ -4,13 +4,53 @@
 #include "Characters/InvasionEnemyCharacter.h"
 #include "Actors/InvasionParticle.h"
 #include "Animation/AnimMontage.h"
+#include "AIModule/Classes/BrainComponent.h"
+#include "AIModule/Classes/AIController.h"
 
-#include "Perception/AIPerceptionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AInvasionEnemyCharacter::AInvasionEnemyCharacter()
 {
-	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>("AIPerceptionComponent");
+}
+
+void AInvasionEnemyCharacter::PauseCharacter()
+{
+	FString Reason;
+	PauseBehaviorTreeLogic(Reason);
+
+	GetMesh()->bPauseAnims = true;
+	
+	StopFire();
+}
+
+void AInvasionEnemyCharacter::ResumeCharacter()
+{
+	FString Reason;
+	ResumeBehaviorTreeLogic(Reason);
+
+	GetMesh()->bPauseAnims = false;
+}
+
+void AInvasionEnemyCharacter::PauseBehaviorTreeLogic(const FString& Reason)
+{
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
+	{
+		if (UBrainComponent* BrainComp = AIController->GetBrainComponent())
+		{
+			BrainComp->PauseLogic(Reason);
+		}
+	}
+}
+
+void AInvasionEnemyCharacter::ResumeBehaviorTreeLogic(const FString& Reason)
+{
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
+	{
+		if (UBrainComponent* BrainComp = AIController->GetBrainComponent())
+		{
+			BrainComp->ResumeLogic(Reason);
+		}
+	}
 }
 
 bool AInvasionEnemyCharacter::TryStartAim()
@@ -58,8 +98,11 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName, FVector Inpulse, FV
 
 				if (EffectClass)
 				{
-					AInvasionParticle* EffectActor = GetWorld()->SpawnActor<AInvasionParticle>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
-					EffectActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketToAttach);
+					if (UWorld* World = GetWorld())
+					{
+						AInvasionParticle* EffectActor = World->SpawnActor<AInvasionParticle>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+						EffectActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketToAttach);
+					}
 				}
 			};
 
@@ -71,12 +114,6 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName, FVector Inpulse, FV
 	}
 
 	return false;
-}
-
-void AInvasionEnemyCharacter::OnGettingExecuted_Implementation()
-{
-	// TODO: this is a bit redundant. Integrate execution kill halding into normal kill handling
-	OnCharacterKilled();
 }
 
 bool AInvasionEnemyCharacter::IsBoneBroken(FName InBoneName) const
@@ -132,4 +169,52 @@ void AInvasionEnemyCharacter::MoveCharacter(FVector WorldDirection, float ScaleV
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 		break;
 	}
+}
+
+void AInvasionEnemyCharacter::InvasionTick_Implementation(float DeltaTime)
+{
+	Super::InvasionTick_Implementation(DeltaTime);
+	TickCharacterMovement(DeltaTime);
+}
+
+void AInvasionEnemyCharacter::TickCharacterMovement(float DeltaTime)
+{
+	float MaxSpeed = MaxSprintSpeed;
+
+	switch (CoverState)
+	{
+	case ECoverState::HighIn:
+	case ECoverState::HighOut:
+	case ECoverState::LowIn:
+	case ECoverState::LowOut:
+		MaxSpeed = FMath::Min(MaxSpeed, 0.0f);
+		break;
+	case ECoverState::InCover:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
+		break;
+	}
+
+	switch (MoveState)
+	{
+	case EMoveState::Sprint:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxSprintSpeed);
+		break;
+	case EMoveState::Walk:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
+		break;
+	case EMoveState::Run:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxRunSpeed);
+		break;
+	}
+
+	switch (AimState)
+	{
+	case EAimState::Idle:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxSprintSpeed);
+		break;
+	case EAimState::Aiming:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxSpeed;
 }

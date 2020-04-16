@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "FootstepAudioConfiguration.generated.h"
+#include "WeaponDamageInfo.generated.h"
 
 USTRUCT(BlueprintType)
-struct FFootstepAudioConfigEntry
+struct FWeaponDamageInfoEntry
 {
 	GENERATED_BODY()
 
@@ -15,16 +15,16 @@ struct FFootstepAudioConfigEntry
 	TEnumAsByte<EPhysicalSurface> PhysicalSurface;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	USoundBase* FootstepSound;
+	class UCurveFloat* DamagePerDistanceCurve;
 };
 
 UCLASS(BlueprintType)
-class INVASION_API UFootstepAudioConfiguration : public UDataAsset
+class INVASION_API UWeaponDamageInfo : public UDataAsset
 {
 	GENERATED_BODY()
 
 public:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Audio)
-	TArray<FFootstepAudioConfigEntry> Entries;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Damage)
+	TArray<FWeaponDamageInfoEntry> DamageConfig;
 };

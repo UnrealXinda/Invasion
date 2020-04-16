@@ -147,17 +147,24 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 			MoveDirection = GetWorldInputVector();
 			NormalizedSpeed = 1.0f;
 
-			// Cannot move outside of cover
-			if (PlayerCharacter->CoverState == ECoverState::InCover)
+			if (PlayerCharacter->CoverState == ECoverState::InCover && PlayerCharacter->CurrentCoverVolume)
 			{
 				bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
-				bool bMovingRight = LastMovementInputVector.Y > 0.0f;
+				bool bMovingRight = LastMovementInputVector.Y >= 0.0f;
 				bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
 				bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
 
+				// Cannot move outside of cover
 				if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
 				{
 					NormalizedSpeed = 0.0f;
+				}
+
+				// Untake cover when input vector is almost opposite of character forward
+				if (FVector::DotProduct(MoveDirection, PlayerCharacter->GetActorForwardVector()) < -0.707f)
+				{
+					NormalizedSpeed = 0.0f;
+					PlayerCharacter->TryUntakeCover();
 				}
 			}
 		}
@@ -310,24 +317,20 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 		if (InputEnabled())
 		{
 			float TargetFOV;
+			float CurrentFOV = PlayerCameraManager->GetFOVAngle();
 			float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
 
 			switch (PlayerCharacter->AimState)
 			{
 			case EAimState::Aiming:
-			{
 				TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
 				break;
-			}
 			case EAimState::Idle:
 			default:
-			{
 				TargetFOV = Weapon->ZoomInfo.DefaultFOV;
 				break;
 			}
-			}
 
-			float CurrentFOV = PlayerCameraManager->GetFOVAngle();
 			NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
 		}
 

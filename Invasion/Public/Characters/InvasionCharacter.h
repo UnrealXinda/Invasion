@@ -7,6 +7,7 @@
 #include "InvasionEnums.h"
 #include "Interfaces/InvasionTick.h"
 #include "GameFramework/Character.h"
+#include "Classes/Perception/AISightTargetInterface.h"
 #include "InvasionCharacter.generated.h"
 
 USTRUCT(BlueprintType)
@@ -24,7 +25,7 @@ struct INVASION_API FWeaponAnimation
 };
 
 UCLASS()
-class INVASION_API AInvasionCharacter : public ACharacter, public IInvasionTick
+class INVASION_API AInvasionCharacter : public ACharacter, public IInvasionTick, public IAISightTargetInterface
 {
 	GENERATED_BODY()
 
@@ -118,6 +119,8 @@ public:
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
 
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = NULL) const override;
+
 	FORCEINLINE class UIKComponent* GetIKComponent() const { return IKComp; }
 
 protected:
@@ -184,8 +187,12 @@ protected:
 		AActor*                  DamageCauser
 	);
 
-	// Used for final cleanup
-	void OnCharacterKilled();
+	virtual void OnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 
 private:
 
@@ -210,4 +217,15 @@ private:
 		class AController*       InstigatedBy,
 		AActor*                  DamageCauser
 	);
+
+	UFUNCTION()
+	void OnCharacterExecuted_Internal(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	// Used for final cleanup
+	void OnCharacterKilled();
 };

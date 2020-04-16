@@ -2,6 +2,7 @@
 
 
 #include "Weapons/InvasionRifle.h"
+#include "Weapons/WeaponDamageInfo.h"
 
 #include "Invasion.h"
 #include "Characters/InvasionCharacter.h"
@@ -43,32 +44,29 @@ AInvasionRifle::AInvasionRifle()
 	RateOfFire = 600;
 }
 
-float AInvasionRifle::GetDamageAmountFromSurfaceType(EPhysicalSurface SurfaceType) const
-{
-	float Damage;
-
-	switch (SurfaceType)
-	{
-	case SURFACE_FLESH_VULNERABLE:
-	case SURFACE_METAL_VULNERABLE:
-		Damage = FatalDamage;
-		break;
-	case SURFACE_FLESH_DEFAULT:
-	case SURFACE_METAL_DEFAULT:
-	default:
-		Damage = BaseDamage;
-		break;
-	}
-
-	return Damage;
-}
-
 void AInvasionRifle::BeginPlay()
 {
 	Super::BeginPlay();
 
 	RandomStream.GenerateNewSeed();
 }
+
+float AInvasionRifle::GetDamage(EPhysicalSurface SurfaceType, float Distance) const
+{
+	float Damage = 0;
+	const FWeaponDamageInfoEntry* InfoEntry = DamageInfo->DamageConfig.FindByPredicate([SurfaceType](const FWeaponDamageInfoEntry& Entry)
+	{
+		return Entry.PhysicalSurface == SurfaceType;
+	});
+
+	if (InfoEntry && InfoEntry->DamagePerDistanceCurve)
+	{
+		Damage = InfoEntry->DamagePerDistanceCurve->GetFloatValue(Distance);
+	}
+
+	return Damage;
+}
+
 
 void AInvasionRifle::Fire()
 {
@@ -106,7 +104,8 @@ void AInvasionRifle::Fire()
 				if (bHitTarget)
 				{
 					EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(HitResult.PhysMaterial.Get());
-					float Damage = GetDamageAmountFromSurfaceType(SurfaceType);
+					float Distance = (HitResult.Location - TraceStart).Size();
+					float Damage = GetDamage(SurfaceType, Distance);
 
 					AActor* HitActor = HitResult.GetActor();
 					AController* InstigatorController = OwnerPawn->GetInstigatorController();

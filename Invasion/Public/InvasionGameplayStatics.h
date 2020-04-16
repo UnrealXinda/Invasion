@@ -169,4 +169,22 @@ public:
 
 #pragma endregion Time Dilation System Helper
 
+#pragma region Gameplay
+
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
+	static void ApplyExecutionDamage(AActor* DamagedActor, float BaseDamage, AController* EventInstigator, AActor* DamageCauser);
+
+#pragma endregion Gameplay
+
+	UFUNCTION(BlueprintCallable, Category = Utils, meta = (WorldContext = "WorldContextObject"))
+	static bool RaycastTest(
+		const UObject*         WorldContextObject,
+		const FVector&         Start,
+		const FVector&         End,
+		const TArray<AActor*>& IgnoredActors,
+		FVector&               OutHitLoc,
+		bool                   bTraceComplex = true,
+		bool                   bDebugDraw = false
+	);
+
 };

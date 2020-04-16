@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "HealthComponent.h"
+#include "Weapons/ExecutionDamageType.h"
 
 UHealthComponent::UHealthComponent()
 {
@@ -19,11 +19,6 @@ void UHealthComponent::Heal(float HealAmount)
 	}
 }
 
-void UHealthComponent::DealExecutionDamage(float DamageAmount)
-{
-	Health = 0.0f;
-}
-
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
 	AController* InstigatedBy, AActor* DamageCauser)
 {
@@ -36,7 +31,15 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 
 		if (Health == 0.0f)
 		{
-			OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+			if (DamageType->IsA<UExecutionDamageType>())
+			{
+				OnCharacterExecuted.Broadcast(this, ActualDamage, InstigatedBy, DamageCauser);
+			}
+
+			else
+			{
+				OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+			}
 		}
 	}
 }

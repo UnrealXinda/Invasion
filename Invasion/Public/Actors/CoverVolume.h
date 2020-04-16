@@ -32,9 +32,9 @@ public:
 
 	FORCEINLINE class UBoxComponent* GetCoverComponent() const { return CoverComp; }
 
-	FORCEINLINE class UBoxComponent* GetLeftBlockVolumeComp() const { return LeftBlockVolumeComp; }
+	FVector GetLeftBlockVolumeLocation() const;
 
-	FORCEINLINE class UBoxComponent* GetRightBlockVolumeComp() const { return RightBlockVolumeComp; }
+	FVector GetRightBlockVolumeLocation() const;
 
 	bool HasActorReachedLeftEdge(const AActor* Actor) const;
 

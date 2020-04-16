@@ -5,5 +5,19 @@
 
 void UAnimNotify_PauseAnimInstance::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	MeshComp->bPauseAnims = true;
+#ifdef UE_BUILD_DEBUG
+	if (UWorld* World = MeshComp->GetWorld())
+	{
+		switch (World->WorldType)
+		{
+		case EWorldType::Game:
+		case EWorldType::PIE:
+#endif
+			MeshComp->bPauseAnims = true;
+
+#ifdef UE_BUILD_DEBUG
+			break;
+		}
+	}
+#endif
 }

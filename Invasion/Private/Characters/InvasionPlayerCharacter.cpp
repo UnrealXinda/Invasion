@@ -156,6 +156,8 @@ bool AInvasionPlayerCharacter::CanMove() const
 		bCanMove = false;
 		break;
 	case ECoverState::InCover:
+		bCanMove = AimState == EAimState::Idle;
+		break;
 	case ECoverState::Idle:
 	default:
 		bCanMove = Super::CanMove();
@@ -174,7 +176,7 @@ bool AInvasionPlayerCharacter::CanAim() const
 {
 	bool bCanAim = Super::CanAim();
 
-	if (CoverState == ECoverState::InCover)
+	if (CoverState == ECoverState::InCover && CurrentCoverVolume)
 	{
 		if (CurrentCoverVolume->CoverType == ECoverType::High)
 		{

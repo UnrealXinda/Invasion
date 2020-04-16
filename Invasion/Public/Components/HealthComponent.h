@@ -38,6 +38,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(
 	AActor*, DamageCauser
 );
 
+/** Delegate type for callbacks when health is equal to or below zero due to melee execution */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+	FOnCharacterExecutedSignature,
+	/* The health component that is reporting this event */
+	UHealthComponent*, HealthComp,
+	/* The last damage that causes this death */
+	float, LastDamage,
+	/* The instigator of this damage. NULL for healing. */
+	class AController*, InstigatedBy,
+	/* The causer of this damage. NULL for healing. */
+	AActor*, DamageCauser
+);
+
 UCLASS(ClassGroup=(Health), meta=(BlueprintSpawnableComponent))
 class INVASION_API UHealthComponent : public UActorComponent
 {
@@ -49,7 +62,10 @@ public:
 	FOnHealthChangedSignature OnHealthChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnCharacterDeathSignature OnCharacterDeath;	
+	FOnCharacterDeathSignature OnCharacterDeath;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnCharacterExecutedSignature OnCharacterExecuted;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Health")
 	float Health;
@@ -63,9 +79,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void Heal(float HealAmount);
-
-	UFUNCTION(BlueprintCallable)
-	void DealExecutionDamage(float DamageAmount);
 
 protected:
 

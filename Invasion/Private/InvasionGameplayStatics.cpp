@@ -15,6 +15,8 @@
 #include "Characters/InvasionCharacter.h"
 #include "Characters/InvasionPlayerCharacter.h"
 
+#include "Weapons/ExecutionDamageType.h"
+
 #include "Kismet/GameplayStatics.h"
 
 bool UInvasionGameplayStatics::IsInEditor()
@@ -220,4 +222,53 @@ float UInvasionGameplayStatics::GetTimeDilation(const UObject* WorldContextObjec
 	}
 
 	return UGameplayStatics::GetGlobalTimeDilation(WorldContextObject);
+}
+
+void UInvasionGameplayStatics::ApplyExecutionDamage(AActor* DamagedActor, float BaseDamage, AController* EventInstigator, AActor* DamageCauser)
+{
+	UGameplayStatics::ApplyDamage(DamagedActor, BaseDamage, EventInstigator, DamageCauser, TSubclassOf<UExecutionDamageType>(UExecutionDamageType::StaticClass()));
+}
+
+bool UInvasionGameplayStatics::RaycastTest(
+	const UObject*         WorldContextObject,
+	const FVector&         Start,
+	const FVector&         End,
+	const TArray<AActor*>& IgnoredActors,
+	FVector&               OutHitLoc,
+	bool                   bTraceComplex,
+	bool                   bDebugDraw
+)
+{
+	if (!WorldContextObject)
+	{
+		return false;
+	}
+
+	FHitResult HitResult;
+	bool bHit;
+
+	if (UWorld* World = WorldContextObject->GetWorld())
+	{
+		if (bDebugDraw)
+		{
+			bHit = UKismetSystemLibrary::LineTraceSingle(WorldContextObject->GetWorld(), Start, End, UEngineTypes::ConvertToTraceType(ECC_Visibility),
+				bTraceComplex, IgnoredActors, EDrawDebugTrace::ForOneFrame, HitResult, true);
+		}
+		else
+		{
+			FCollisionQueryParams CollisionParams;
+			CollisionParams.bTraceComplex = bTraceComplex;
+			CollisionParams.AddIgnoredActors(IgnoredActors);
+			bHit = WorldContextObject->GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
+		}
+
+		if (bHit)
+		{
+			OutHitLoc = HitResult.Location;
+		}
+
+		return bHit;
+	}
+
+	return false;
 }

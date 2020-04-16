@@ -47,7 +47,7 @@ public:
 	AInvasionRifle();
 
 	UFUNCTION(BlueprintPure)
-	float GetDamageAmountFromSurfaceType(EPhysicalSurface SurfaceType) const;
+	float GetDamage(EPhysicalSurface SurfaceType, float Distance) const;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

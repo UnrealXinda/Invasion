@@ -12,4 +12,7 @@ namespace InvasionDebug
 
 	extern int g_DebugDrawIKTrace;
 	extern FAutoConsoleVariableRef CVarDebugDrawIKTrace;
+
+	extern int g_DebugDrawAISightTrace;
+	extern FAutoConsoleVariableRef CVarDebugDrawAISightTrace;
 }

@@ -107,16 +107,12 @@ public:
 	float CrosshairZoomInPerFire;
 
 	/** The crosshair spread recover rate */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = Weapon)
 	float CrosshairZoomOutPerSecond;
 
-	/** The base damage of the weapon */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
-	float BaseDamage;
-
-	/** The fatal damage of the weapon, such as committing a headshot */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
-	float FatalDamage;
+	/** The damage info of the weapon */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = Weapon)
+	class UWeaponDamageInfo* DamageInfo;
 
 	/** RPM - Bullets per minute fired */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)

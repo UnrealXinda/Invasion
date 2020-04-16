@@ -85,6 +85,18 @@ public:
 	AInvasionEnemyCharacter();
 
 	UFUNCTION(BlueprintCallable)
+	void PauseCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	void PauseBehaviorTreeLogic(const FString& Reason);
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeBehaviorTreeLogic(const FString& Reason);
+
+	UFUNCTION(BlueprintCallable)
 	bool TryStartAim();
 
 	UFUNCTION(BlueprintCallable)
@@ -92,9 +104,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool TryBreakBone(FName InBoneName, FVector Inpulse = FVector::ZeroVector, FVector HitLocation = FVector::ZeroVector);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-	void OnGettingExecuted();
 
 	UFUNCTION(BlueprintPure)
 	bool IsBoneBroken(FName InBoneName) const;
@@ -105,10 +114,10 @@ public:
 	float GetMaxWalkSpeed() const;
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F) override;
+	virtual void InvasionTick_Implementation(float DeltaTime) override;
 
 protected:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
-	class UAIPerceptionComponent* AIPerceptionComp;
+	void TickCharacterMovement(float DeltaTime);
 
 };

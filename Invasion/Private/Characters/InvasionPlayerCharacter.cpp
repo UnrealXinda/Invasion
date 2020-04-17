@@ -88,6 +88,16 @@ void AInvasionPlayerCharacter::PostInitializeComponents()
 	OnTakeAnyDamage.AddDynamic(this, &AInvasionPlayerCharacter::OnPlayerTakeAnyDamage);
 }
 
+bool AInvasionPlayerCharacter::CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor /*= NULL*/) const
+{
+	if (DashState == EDashState::Dashing)
+	{
+		return false;
+	}
+
+	return Super::CanBeSeenFrom(ObserverLocation, OutSeenLocation, NumberOfLoSChecksPerformed, OutSightStrength, IgnoreActor);
+}
+
 void AInvasionPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();

@@ -327,7 +327,16 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 				break;
 			case EAimState::Idle:
 			default:
-				TargetFOV = Weapon->ZoomInfo.DefaultFOV;
+				if (PlayerCharacter->MoveState == EMoveState::Sprint)
+				{
+					float CurrentVelocity = PlayerCharacter->GetVelocity().Size();
+					float Alpha = FMath::Clamp(CurrentVelocity / 800, 0.0f, 1.0f);
+					TargetFOV = FMath::Lerp(Weapon->ZoomInfo.DefaultFOV, 120.0f, Alpha);
+				}
+				else
+				{
+					TargetFOV = Weapon->ZoomInfo.DefaultFOV;
+				}
 				break;
 			}
 

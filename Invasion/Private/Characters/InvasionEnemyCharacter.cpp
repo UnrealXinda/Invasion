@@ -19,7 +19,7 @@ void AInvasionEnemyCharacter::PauseCharacter()
 	PauseBehaviorTreeLogic(Reason);
 
 	GetMesh()->bPauseAnims = true;
-	
+
 	StopFire();
 }
 
@@ -207,14 +207,30 @@ void AInvasionEnemyCharacter::TickCharacterMovement(float DeltaTime)
 		break;
 	}
 
-	switch (AimState)
-	{
-	case EAimState::Idle:
-		MaxSpeed = FMath::Min(MaxSpeed, MaxSprintSpeed);
-		break;
-	case EAimState::Aiming:
-		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
-	}
-
 	GetCharacterMovement()->MaxWalkSpeed = MaxSpeed;
+}
+
+void AInvasionEnemyCharacter::OnCharacterDeath(
+	UHealthComponent*        HealthComponent,
+	float                    LastDamage,
+	const UDamageType*       DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	Super::OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+
+	DetachFromControllerPendingDestroy();
+}
+
+void AInvasionEnemyCharacter::OnCharacterExecuted(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	Super::OnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
+
+	DetachFromControllerPendingDestroy();
 }

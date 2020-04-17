@@ -120,4 +120,19 @@ protected:
 
 	void TickCharacterMovement(float DeltaTime);
 
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	virtual void OnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
 };

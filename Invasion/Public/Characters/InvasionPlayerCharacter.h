@@ -86,6 +86,8 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = NULL) const override;
+
 	void Dash(FRotator Direction);
 
 	void Heal(float RecoverAmount);

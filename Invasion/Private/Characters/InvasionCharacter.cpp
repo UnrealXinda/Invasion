@@ -72,6 +72,7 @@ void AInvasionCharacter::BeginPlay()
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleEndOverlap);
 
 	HealthComp->OnCharacterDeath.AddDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
+	HealthComp->OnCharacterExecuted.AddDynamic(this, &AInvasionCharacter::OnCharacterExecuted_Internal);
 }
 
 void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
@@ -219,24 +220,28 @@ bool AInvasionCharacter::TryTakeCover()
 
 bool AInvasionCharacter::TryUntakeCover()
 {
-	bool bIsTakingCover = CurrentCoverVolume != nullptr;
 	bool bIsInCoverState = (CoverState == ECoverState::InCover);
 	bool bIsAiming = (AimState == EAimState::Aiming);
 
-	bool bCanUntakeCover = bIsTakingCover && bIsInCoverState && !bIsAiming;
-
-	if (bIsTakingCover && bIsInCoverState)
+	if (bIsInCoverState)
 	{
 		if (!bIsAiming)
 		{
-			switch (CurrentCoverVolume->CoverType)
+			if (CurrentCoverVolume)
 			{
-			case ECoverType::Low:
-				CoverState = ECoverState::LowOut;
-				break;
-			case ECoverType::High:
+				switch (CurrentCoverVolume->CoverType)
+				{
+				case ECoverType::Low:
+					CoverState = ECoverState::LowOut;
+					break;
+				case ECoverType::High:
+					CoverState = ECoverState::HighOut;
+					break;
+				}
+			}
+			else
+			{
 				CoverState = ECoverState::HighOut;
-				break;
 			}
 
 			CurrentCoverVolume = nullptr;

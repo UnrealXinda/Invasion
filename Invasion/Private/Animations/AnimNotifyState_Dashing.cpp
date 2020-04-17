@@ -10,7 +10,6 @@ void UAnimNotifyState_Dashing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAn
 	if (AInvasionPlayerCharacter* Character = Cast<AInvasionPlayerCharacter>(MeshComp->GetOwner()))
 	{
 		Character->DashState = EDashState::Dashing;
-
 	}
 
 	if (UAnimInstance* AnimInstance = MeshComp->GetAnimInstance())

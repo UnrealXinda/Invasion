@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "Data/CharacterExecutionScriptData.h"
+#include "Data/PlayerHealthConfiguration.h"
+#include "Data/PlayerEnergyConfiguration.h"
 #include "InvasionGameMode.generated.h"
 
 class ATimeDilationSystem;
@@ -18,17 +20,17 @@ class INVASION_API AInvasionGameMode : public AGameModeBase
 
 public:
 
-	/** Maximum distance between player and victim when trying to melee execute */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Game Settings")
-	float MaximumExecutionDistance;
+	/** The execution move info */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	UCharacterExecutionScriptData* ExecutionData;
 
-	/** Time before player can self recover health when taking damage */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Player Health Settings")
-	float TimeBeforeSelfRecover;
+	/** The player health config */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (DisplayName = "Player Health Configuration"))
+	UPlayerHealthConfiguration* PlayerHealthConfig;
 
-	/** Health points recovered per second */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Player Health Settings")
-	float SelfRecoverPerSecond;
+	/** The player energy config */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (DisplayName = "Player Energy Configuration"))
+	UPlayerEnergyConfiguration* PlayerEnergyConfig;
 	
 public:
 
@@ -52,10 +54,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Systems)
 	TSubclassOf<APostProcessSystem> PostProcessSystemClass;
-
-	/** The execution move info */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
-	UCharacterExecutionScriptData* ExecutionData;
 
 #pragma region System Runtime Instances
 

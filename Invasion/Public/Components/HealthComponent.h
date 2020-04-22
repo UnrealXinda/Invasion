@@ -67,18 +67,32 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnCharacterExecutedSignature OnCharacterExecuted;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Health")
-	float Health;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
-	float DefaultHealth;
-
 public:	
 
 	UHealthComponent();
 
 	UFUNCTION(BlueprintCallable)
 	void Heal(float HealAmount);
+
+	UFUNCTION(BlueprintPure)
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetDefaultHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetMaxHealth() const;
+
+protected:	
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Health")
+	float Health;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
+	float DefaultHealth;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Health")
+	float MaxHealth;
 
 protected:
 

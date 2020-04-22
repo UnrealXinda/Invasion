@@ -5,6 +5,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/EnergyComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
 #include "Animation/AnimMontage.h"
@@ -61,6 +62,8 @@ AInvasionPlayerCharacter::AInvasionPlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	EnergyComp = CreateDefaultSubobject<UEnergyComponent>(TEXT("Energy Component"));
+
 	DashState = EDashState::Idle;
 	ExecuteState = EExecuteState::Idle;
 
@@ -76,13 +79,12 @@ void AInvasionPlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (UWorld* World = GetWorld())
+	AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+	if (GameMode && GameMode->ExecutionData)
 	{
-		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld()))
-		{
-			SphereComp->SetSphereRadius(GameMode->MaximumExecutionDistance);
-			SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AInvasionPlayerCharacter::OnSphereBeginOverlap);
-		}
+		SphereComp->SetSphereRadius(GameMode->ExecutionData->MaximumExecutionDistance);
+		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AInvasionPlayerCharacter::OnSphereBeginOverlap);
 	}
 	
 	OnTakeAnyDamage.AddDynamic(this, &AInvasionPlayerCharacter::OnPlayerTakeAnyDamage);
@@ -105,13 +107,12 @@ void AInvasionPlayerCharacter::BeginPlay()
 
 void AInvasionPlayerCharacter::RecoverHealth(float DeltaSeconds)
 {
-	if (UWorld* World = GetWorld())
+	AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+	if (GameMode && GameMode->PlayerHealthConfig)
 	{
-		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(World))
-		{
-			float HealthRecovered = GameMode->SelfRecoverPerSecond * DeltaSeconds;
-			Heal(HealthRecovered);
-		}
+		float HealthRecovered = GameMode->PlayerHealthConfig->SelfRecoverPerSecond *  DeltaSeconds;
+		Heal(HealthRecovered);
 	}
 }
 
@@ -298,16 +299,15 @@ void AInvasionPlayerCharacter::OnPlayerTakeAnyDamage(
 	class AController*       InstigatedBy,
 	AActor*                  DamageCauser)
 {
-	if (UWorld* World = GetWorld())
-	{
-		if (AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(World))
-		{
-			bCanSelfRecover = false;
+	AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
 
-			float TimeBeforeSelfRecover = GameMode->TimeBeforeSelfRecover;
-			GetWorldTimerManager().ClearTimer(ResetSelfRecoverTimerHandle);
-			GetWorldTimerManager().SetTimer(ResetSelfRecoverTimerHandle, this, &AInvasionPlayerCharacter::EnableSelfRecover, TimeBeforeSelfRecover, false);
-		}
+	if (GameMode && GameMode->PlayerHealthConfig)
+	{
+		bCanSelfRecover = false;
+
+		float TimeBeforeSelfRecover = GameMode->PlayerHealthConfig->TimeBeforeSelfRecover;
+		GetWorldTimerManager().ClearTimer(ResetSelfRecoverTimerHandle);
+		GetWorldTimerManager().SetTimer(ResetSelfRecoverTimerHandle, this, &AInvasionPlayerCharacter::EnableSelfRecover, TimeBeforeSelfRecover, false);
 	}
 }
 
@@ -320,6 +320,8 @@ void AInvasionPlayerCharacter::OnCharacterDeath(
 )
 {
 	Super::OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+
+	OnTakeAnyDamage.RemoveDynamic(this, &AInvasionPlayerCharacter::OnPlayerTakeAnyDamage);
 }
 
 void AInvasionPlayerCharacter::ExecuteCharacter_Implementation(AInvasionCharacter* Victim)

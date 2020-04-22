@@ -106,6 +106,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	class USphereComponent* SphereComp;
 
+	/** Energy component for tracking current available energy */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	class UEnergyComponent* EnergyComp;
+
 	/** The animation montage used for dashing */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	class UAnimMontage* DashMontage;

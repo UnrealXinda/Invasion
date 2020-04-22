@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InvasionEnums.h"
 #include "GameFramework/Actor.h"
 #include "InvasionWeapon.generated.h"
 
@@ -67,6 +68,19 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	class AController*, InstigatedBy
 );
 
+/** Delegate type for callbacks when weapon hits something */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+	FOnWeaponHitSignature,
+	/* The weapon that is firing */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this attack */
+	class AController*, InstigatedBy,		
+	/* The actor that this weapon hit */
+	AActor*, HitActor,
+	/* The physical surface this weapon hit */
+	EPhysicalSurface, PhysicalSurface
+);
+
 UCLASS()
 class INVASION_API AInvasionWeapon : public AActor
 {
@@ -129,6 +143,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = Events)
 	FOnWeaponFireSignature OnWeaponFire;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponHitSignature OnWeaponHit;
 
 public:
 

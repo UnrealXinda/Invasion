@@ -41,14 +41,6 @@ AInvasionPlayerController::AInvasionPlayerController()
 void AInvasionPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Cache local variables to eliminate the necessity of casting every time we try to use it
-	PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
-	InvasionPlayerState = Cast<AInvasionPlayerState>(PlayerState);
-	InvasionPlayerCameraManager = Cast<AInvasionPlayerCameraManager>(PlayerCameraManager);
-
-	check(PlayerCharacter);
-	check(InvasionPlayerState);
 }
 
 void AInvasionPlayerController::SetupInputComponent()
@@ -114,6 +106,8 @@ void AInvasionPlayerController::MoveRight(float Value)
 
 void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	// We are caching input vector and manually processing character movement. Therefore, we need to account for
 	// the case where input is disabled
 	if (PlayerCharacter && InputEnabled())
@@ -181,6 +175,8 @@ void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 
 void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	// We are caching input vector and manually processing character movement. Therefore, we need to account for
 	// the case where input is disabled
 	if (PlayerCharacter && InputEnabled())
@@ -217,10 +213,10 @@ void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
 
 void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 {
-	if (PlayerCharacter)
+	if (const AInvasionPlayerCharacter* PlayerCharacter = Cast<const AInvasionPlayerCharacter>(GetPawn()))
 	{
 		// Update view min/max pitch value
-		auto TickViewPitchValue = [this]()
+		auto TickViewPitchValue = [this, PlayerCharacter]()
 		{
 			float MinPitch = ViewPitchMin;
 			float MaxPitch = ViewPitchMax;
@@ -239,7 +235,7 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 		};
 
 		// Update view min/max yaw value
-		auto TickViewYawValue = [this]()
+		auto TickViewYawValue = [this, PlayerCharacter]()
 		{
 			if (PlayerCharacter->CoverState == ECoverState::Idle)
 			{
@@ -288,16 +284,19 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 		};
 
 		// Play camera shake when sprinting
-		auto PlaySprintCameraShake = [this]()
+		auto PlaySprintCameraShake = [this, PlayerCharacter]()
 		{
-			bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
-
-			if (bIsSprinting && SprintCameraShakeClass)
+			if (AInvasionPlayerCameraManager* CameraManager = Cast<AInvasionPlayerCameraManager>(PlayerCameraManager))
 			{
-				float MaxSpeed = PlayerCharacter->GetCharacterMovement()->MaxWalkSpeed;
-				float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
-				float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / MaxSpeed);
-				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
+				bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
+
+				if (bIsSprinting && SprintCameraShakeClass)
+				{
+					float MaxSpeed = PlayerCharacter->GetCharacterMovement()->MaxWalkSpeed;
+					float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
+					float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / MaxSpeed);
+					CameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
+				}
 			}
 		};
 
@@ -309,6 +308,8 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 
 void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 {
+	const AInvasionPlayerCharacter* PlayerCharacter = Cast<const AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
 	{
 		float NewFOV;
@@ -331,7 +332,7 @@ void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 				{
 					float CurrentVelocity = PlayerCharacter->GetVelocity().Size();
 					float Alpha = FMath::Clamp(CurrentVelocity / 800, 0.0f, 1.0f);
-					TargetFOV = FMath::Lerp(Weapon->ZoomInfo.DefaultFOV, 120.0f, Alpha);
+					TargetFOV = FMath::Lerp(Weapon->ZoomInfo.DefaultFOV, 140.0f, Alpha);
 				}
 				else
 				{
@@ -364,24 +365,32 @@ void AInvasionPlayerController::LookUp(float Rate)
 
 void AInvasionPlayerController::TurnAtRate(float Rate)
 {
-	float BaseTurnRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseTurnRate;
-	float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+	if (const AInvasionPlayerState* InvasionPlayerState = Cast<const AInvasionPlayerState>(PlayerState))
+	{
+		float BaseTurnRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseTurnRate;
+		float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
 
-	// calculate delta for this frame from the rate information
-	AddYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+		// calculate delta for this frame from the rate information
+		AddYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+	}
 }
 
 void AInvasionPlayerController::LookUpAtRate(float Rate)
 {
-	float BaseLookUpRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseLookUpRate;
-	float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+	if (const AInvasionPlayerState* InvasionPlayerState = Cast<const AInvasionPlayerState>(PlayerState))
+	{
+		float BaseLookUpRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseLookUpRate;
+		float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
 
-	// calculate delta for this frame from the rate information
-	AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+		// calculate delta for this frame from the rate information
+		AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+	}
 }
 
 void AInvasionPlayerController::OnPressDash()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanDash())
 	{
 		FRotator DashDirection;
@@ -410,7 +419,7 @@ void AInvasionPlayerController::OnPressDash()
 
 void AInvasionPlayerController::OnPressTakeCover()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
 		switch (PlayerCharacter->CoverState)
 		{
@@ -430,6 +439,8 @@ void AInvasionPlayerController::OnPressTakeCover()
 
 void AInvasionPlayerController::OnPressExecute()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanExecute())
 	{
 		TArray<AActor*> ExecutableCharacters = PlayerCharacter->GetExecutableCharacters();
@@ -457,6 +468,8 @@ void AInvasionPlayerController::OnReleaseSprint()
 
 void AInvasionPlayerController::OnPressAim()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanAim())
 	{
 		PlayerCharacter->AimState = EAimState::Aiming;
@@ -466,7 +479,7 @@ void AInvasionPlayerController::OnPressAim()
 
 void AInvasionPlayerController::OnReleaseAim()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
 		PlayerCharacter->AimState = EAimState::Idle;
 		PlayerCharacter->bUseControllerRotationYaw = false;
@@ -482,6 +495,8 @@ void AInvasionPlayerController::OnReleaseAim()
 
 void AInvasionPlayerController::OnPressFire()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanFire())
 	{
 		PlayerCharacter->StartFire();
@@ -490,7 +505,7 @@ void AInvasionPlayerController::OnPressFire()
 
 void AInvasionPlayerController::OnReleaseFire()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
 		PlayerCharacter->StopFire();
 	}

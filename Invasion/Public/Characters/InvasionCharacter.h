@@ -148,7 +148,37 @@ protected:
 
 protected:
 
-	virtual void BeginPlay() override;	
+	virtual void BeginPlay() override;
+
+	/** Event called when the character health is changed. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnHealthChanged"))
+	void ReceiveOnHealthChanged(
+		class UHealthComponent*  HealthComponent,
+		float                    Health,
+		float                    HealthDelta,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	/** Event called when the character is dead. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnCharacterDeath"))
+	void ReceiveOnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	/** Event called when the character is executed. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnCharacterExecuted"))
+	void ReceiveOnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 
 	UFUNCTION()
 	virtual void OnCapsuleBeginOverlap(

@@ -43,12 +43,12 @@ AInvasionCharacter::AInvasionCharacter()
 
 float AInvasionCharacter::GetDefaultHealth() const
 {
-	return HealthComp->DefaultHealth;
+	return HealthComp->GetDefaultHealth();
 }
 
 float AInvasionCharacter::GetCurrentHealth() const
 {
-	return HealthComp->Health;
+	return HealthComp->GetHealth();
 }
 
 float AInvasionCharacter::GetCurrentHealthPercentage() const
@@ -459,6 +459,7 @@ void AInvasionCharacter::OnHealthChanged_Internal(
 )
 {
 	OnHealthChanged(HealthComponent, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
+	ReceiveOnHealthChanged(HealthComponent, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionCharacter::OnCharacterDeath_Internal(
@@ -471,6 +472,7 @@ void AInvasionCharacter::OnCharacterDeath_Internal(
 {
 	OnCharacterKilled();
 	OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+	ReceiveOnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionCharacter::OnCharacterExecuted_Internal(
@@ -482,4 +484,5 @@ void AInvasionCharacter::OnCharacterExecuted_Internal(
 {
 	OnCharacterKilled();
 	OnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
+	ReceiveOnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
 }

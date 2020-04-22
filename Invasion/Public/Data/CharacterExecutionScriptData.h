@@ -42,4 +42,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FExecutionScript> ExecutionScripts;
+
+	/** Maximum distance between player and victim when trying to melee execute */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0))
+	float MaximumExecutionDistance;
 };

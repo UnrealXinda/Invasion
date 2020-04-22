@@ -112,6 +112,7 @@ void AInvasionRifle::Fire()
 					FVector ShotDirection = TraceEnd - TraceStart;
 
 					UGameplayStatics::ApplyPointDamage(HitActor, Damage, ShotDirection, HitResult, InstigatorController, this, DamageType);
+					OnWeaponHit.Broadcast(this, InstigatorController, HitActor, SurfaceType);
 
 					// Play impact effect
 					PlayImpactEffect(HitResult.ImpactPoint, HitResult.ImpactNormal.Rotation(), SurfaceType);
@@ -153,7 +154,10 @@ void AInvasionRifle::StartFire()
 
 void AInvasionRifle::StopFire()
 {
-	GetWorldTimerManager().ClearTimer(ShotIntervalTimerHandle);
+	if (ShotIntervalTimerHandle.IsValid())
+	{
+		GetWorldTimerManager().ClearTimer(ShotIntervalTimerHandle);
+	}
 }
 
 void AInvasionRifle::SetWeaponVisibility(bool bVisible)

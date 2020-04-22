@@ -6,17 +6,33 @@
 UHealthComponent::UHealthComponent()
 {
 	DefaultHealth = 100.0f;
+	MaxHealth = 100.0f;
 }
 
 void UHealthComponent::Heal(float HealAmount)
 {
 	if (HealAmount > 0.0f)
 	{
-		float ActualHeal = FMath::Min(HealAmount, DefaultHealth - Health);
+		float ActualHeal = FMath::Min(HealAmount, MaxHealth - Health);
 		Health += ActualHeal;
 
 		OnHealthChanged.Broadcast(this, Health, ActualHeal, nullptr, nullptr, nullptr);
 	}
+}
+
+float UHealthComponent::GetHealth() const
+{
+	return Health;
+}
+
+float UHealthComponent::GetDefaultHealth() const
+{
+	return DefaultHealth;
+}
+
+float UHealthComponent::GetMaxHealth() const
+{
+	return MaxHealth;
 }
 
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 

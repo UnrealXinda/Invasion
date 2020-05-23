@@ -22,6 +22,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EDashState DashState;
 
+	/** The scan state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EScanState ScanState;
+
 	/** The execute state of the character */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = States)
 	EExecuteState ExecuteState;
@@ -48,17 +52,41 @@ public:
 
 public:
 
-	UFUNCTION(BlueprintCallable)
-	TArray<AActor*> GetExecutableCharacters() const;
-
 	UFUNCTION(BlueprintNativeEvent)
 	void ExecuteCharacter(AInvasionCharacter* Victim);
 
-	UFUNCTION(BlueprintCallable)
-	virtual bool CanDash() const;	
+	UFUNCTION(BlueprintNativeEvent)
+	void BeginScan();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndScan();
+
+	UFUNCTION(BlueprintPure)
+	TArray<AActor*> GetExecutableCharacters() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanDash() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanBeginScan() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanEndScan() const;
 
 	UFUNCTION(BlueprintPure)
 	virtual bool CanExecute() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetDefaultEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetMaxEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentEnergyPercentage() const;
 
 	virtual bool CanMove() const override;
 
@@ -125,6 +153,9 @@ protected:
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
 
 	UFUNCTION()
+	void OnWeaponHit(class AInvasionWeapon* Weapon, class AController* InstigatedBy, AActor* HitActor, EPhysicalSurface PhysicalSurface);
+
+	UFUNCTION()
 	void OnSphereBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
 		AActor*              OtherActor,
@@ -154,5 +185,7 @@ protected:
 
 	virtual void BeginPlay() override;
 
-	void RecoverHealth(float DeltaSeconds);
+	void TickHealth(float DeltaTime);
+
+	void TickEnergy(float DeltaTime);
 };

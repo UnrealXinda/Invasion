@@ -82,6 +82,9 @@ public:
 	float GetCurrentHealth() const;
 
 	UFUNCTION(BlueprintPure)
+	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintPure)
 	float GetCurrentHealthPercentage() const;
 
 	UFUNCTION(BlueprintPure)

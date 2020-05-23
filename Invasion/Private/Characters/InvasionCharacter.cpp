@@ -51,9 +51,14 @@ float AInvasionCharacter::GetCurrentHealth() const
 	return HealthComp->GetHealth();
 }
 
+float AInvasionCharacter::GetMaxHealth() const
+{
+	return HealthComp->GetMaxHealth();
+}
+
 float AInvasionCharacter::GetCurrentHealthPercentage() const
 {
-	return GetCurrentHealth() / GetDefaultHealth();
+	return GetCurrentHealth() / GetMaxHealth();
 }
 
 // Called when the game starts or when spawned

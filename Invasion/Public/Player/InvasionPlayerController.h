@@ -78,6 +78,9 @@ public:
 	/** Called for dashing in current input direction */
 	void OnPressDash();
 
+	/** Called when attempting to scan enemies */
+	void OnPressScan();
+
 	/** Called when attempting to take cover */
 	void OnPressTakeCover();
 

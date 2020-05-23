@@ -67,6 +67,9 @@ void AInvasionPlayerController::SetupInputComponent()
 	InputComponent->BindAction(InvasionStatics::Execute, IE_Pressed, this, &AInvasionPlayerController::OnPressExecute);
 
 	// Left shoulder button actions
+	InputComponent->BindAction(InvasionStatics::Scan, IE_Pressed, this, &AInvasionPlayerController::OnPressScan);
+
+	// Right shoulder button actions
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Pressed, this, &AInvasionPlayerController::OnPressSprint);
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Released, this, &AInvasionPlayerController::OnReleaseSprint);
 
@@ -414,6 +417,22 @@ void AInvasionPlayerController::OnPressDash()
 		}
 
 		PlayerCharacter->Dash(DashDirection);
+	}
+}
+
+void AInvasionPlayerController::OnPressScan()
+{
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
+	{
+		if (PlayerCharacter->CanBeginScan())
+		{
+			PlayerCharacter->BeginScan();
+		}
+
+		else if (PlayerCharacter->CanEndScan())
+		{
+			PlayerCharacter->EndScan();
+		}
 	}
 }
 

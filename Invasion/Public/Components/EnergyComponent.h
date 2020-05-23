@@ -39,6 +39,9 @@ public:
 	float GetEnergy() const;
 
 	UFUNCTION(BlueprintPure)
+	float GetDefaultEnergy() const;
+
+	UFUNCTION(BlueprintPure)
 	float GetMaxEnergy() const;
 
 protected:

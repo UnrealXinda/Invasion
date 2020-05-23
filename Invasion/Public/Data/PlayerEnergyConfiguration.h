@@ -44,11 +44,15 @@ public:
 
 	/** Energy cost per scan */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Skill Cost")
-	float ScanCost;
+	float ScanCostPerSecond;
 
 	/** Energy recovery */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Energy Recover")
 	TArray<FWeaponEnergyRecover> WeaponRecover;
+
+	/** Health points recovered per second */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0))
+	float SelfRecoverPerSecond;
 
 public:
 

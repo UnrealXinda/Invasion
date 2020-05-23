@@ -37,6 +37,11 @@ float UEnergyComponent::GetEnergy() const
 	return Energy;
 }
 
+float UEnergyComponent::GetDefaultEnergy() const
+{
+	return DefaultEnergy;
+}
+
 float UEnergyComponent::GetMaxEnergy() const
 {
 	return MaxEnergy;

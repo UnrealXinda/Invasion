@@ -105,14 +105,36 @@ void AInvasionPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AInvasionPlayerCharacter::RecoverHealth(float DeltaSeconds)
+void AInvasionPlayerCharacter::TickHealth(float DeltaTime)
 {
-	AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
-
-	if (GameMode && GameMode->PlayerHealthConfig)
+	if (bCanSelfRecover)
 	{
-		float HealthRecovered = GameMode->PlayerHealthConfig->SelfRecoverPerSecond *  DeltaSeconds;
-		Heal(HealthRecovered);
+		AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+		if (GameMode && GameMode->PlayerHealthConfig)
+		{
+			float HealthRecovered = GameMode->PlayerHealthConfig->SelfRecoverPerSecond *  DeltaTime;
+			Heal(HealthRecovered);
+		}
+	}
+}
+
+void AInvasionPlayerCharacter::TickEnergy(float DeltaTime)
+{
+	if (ScanState == EScanState::Scanning)
+	{
+		AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+		if (GameMode && GameMode->PlayerEnergyConfig)
+		{
+			float EnergyCost = GameMode->PlayerEnergyConfig->ScanCostPerSecond *  DeltaTime;
+			EnergyComp->CostEnergy(EnergyCost);
+
+			if (EnergyComp->GetEnergy() == 0.0f)
+			{
+				EndScan();
+			}
+		}		
 	}
 }
 
@@ -125,10 +147,18 @@ void AInvasionPlayerCharacter::InvasionTick_Implementation(float DeltaTime)
 {
 	Super::InvasionTick_Implementation(DeltaTime);
 
-	if (bCanSelfRecover)
-	{
-		RecoverHealth(DeltaTime);
-	}
+	TickHealth(DeltaTime);
+	TickEnergy(DeltaTime);
+}
+
+void AInvasionPlayerCharacter::BeginScan_Implementation()
+{
+
+}
+
+void AInvasionPlayerCharacter::EndScan_Implementation()
+{
+
 }
 
 TArray<AActor*> AInvasionPlayerCharacter::GetExecutableCharacters() const
@@ -141,17 +171,65 @@ TArray<AActor*> AInvasionPlayerCharacter::GetExecutableCharacters() const
 
 bool AInvasionPlayerCharacter::CanDash() const
 {
-	bool bIsAiming = AimState == EAimState::Aiming;
-	bool bIsDashing = DashState == EDashState::Dashing;
-	bool bIsInCover = CoverState != ECoverState::Idle;
-	bool bCanMove = CanMove();
+	const AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
 
-	return !bIsAiming && !bIsDashing && !bIsInCover && bCanMove;
+	if (GameMode && GameMode->PlayerEnergyConfig)
+	{
+		bool bIsAiming = AimState == EAimState::Aiming;
+		bool bIsDashing = DashState == EDashState::Dashing;
+		bool bIsInCover = CoverState != ECoverState::Idle;
+		bool bCanMove = CanMove();
+		bool bHasEnoughEnergy = GetCurrentEnergy() >= GameMode->PlayerEnergyConfig->DashCost;
+
+		return !bIsAiming && !bIsDashing && !bIsInCover && bCanMove && bHasEnoughEnergy;
+	}
+
+	return false;
+}
+
+bool AInvasionPlayerCharacter::CanBeginScan() const
+{
+	const AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+	if (GameMode && GameMode->PlayerEnergyConfig)
+	{
+		bool bIsIdle = ScanState == EScanState::Idle;
+		bool bHasEnoughEnergy = GetCurrentEnergy() >= GameMode->PlayerEnergyConfig->ScanCostPerSecond;
+
+		return bIsIdle && bHasEnoughEnergy;
+	}
+
+	return false;	
+}
+
+bool AInvasionPlayerCharacter::CanEndScan() const
+{
+	return ScanState == EScanState::Scanning;
 }
 
 bool AInvasionPlayerCharacter::CanExecute() const
 {
 	return ExecuteState == EExecuteState::Idle;
+}
+
+float AInvasionPlayerCharacter::GetDefaultEnergy() const
+{
+	return EnergyComp->GetDefaultEnergy();
+}
+
+float AInvasionPlayerCharacter::GetCurrentEnergy() const
+{
+	return EnergyComp->GetEnergy();
+}
+
+float AInvasionPlayerCharacter::GetMaxEnergy() const
+{
+	return EnergyComp->GetMaxEnergy();
+}
+
+float AInvasionPlayerCharacter::GetCurrentEnergyPercentage() const
+{
+	return GetCurrentEnergy() / GetMaxEnergy();
 }
 
 bool AInvasionPlayerCharacter::CanMove() const
@@ -243,6 +321,7 @@ bool AInvasionPlayerCharacter::EquipWeapon(AInvasionWeapon* Weapon)
 	if (bEquipped)
 	{
 		CurrentWeapon->OnWeaponFire.AddDynamic(this, &AInvasionPlayerCharacter::OnWeaponFire);
+		CurrentWeapon->OnWeaponHit.AddDynamic(this, &AInvasionPlayerCharacter::OnWeaponHit);
 	}
 
 	return bEquipped;
@@ -255,6 +334,7 @@ bool AInvasionPlayerCharacter::UnequipWeapon(AInvasionWeapon* Weapon)
 	if (bUnequipped)
 	{
 		Weapon->OnWeaponFire.RemoveDynamic(this, &AInvasionPlayerCharacter::OnWeaponFire);
+		Weapon->OnWeaponHit.RemoveDynamic(this, &AInvasionPlayerCharacter::OnWeaponHit);
 	}
 
 	return bUnequipped;
@@ -264,6 +344,13 @@ void AInvasionPlayerCharacter::Dash(FRotator Direction)
 {
 	SetActorRotation(Direction);
 	PlayAnimMontage(DashMontage);
+
+	const AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+	if (GameMode && GameMode->PlayerEnergyConfig)
+	{
+		EnergyComp->CostEnergy(GameMode->PlayerEnergyConfig->DashCost);
+	}
 }
 
 void AInvasionPlayerCharacter::Heal(float RecoverAmount)
@@ -274,6 +361,24 @@ void AInvasionPlayerCharacter::Heal(float RecoverAmount)
 void AInvasionPlayerCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* InstigatedBy)
 {
 	Super::OnWeaponFire(Weapon, InstigatedBy);
+}
+
+void AInvasionPlayerCharacter::OnWeaponHit(AInvasionWeapon* Weapon, AController* InstigatedBy, AActor* HitActor, EPhysicalSurface PhysicalSurface)
+{
+	if (const AInvasionCharacter* HitCharacter = Cast<AInvasionCharacter>(HitActor))
+	{
+		// Only gain energy when hitting alive characters
+		if (HitCharacter->GetCurrentHealth() > 0.0F)
+		{
+			const AInvasionGameMode* GameMode = UInvasionGameplayStatics::GetInvasionGameMode(GetWorld());
+
+			if (GameMode && GameMode->PlayerEnergyConfig)
+			{
+				float EnergyRecover = GameMode->PlayerEnergyConfig->GetEnergyRecoverFromWeapon(Weapon->WeaponType, PhysicalSurface);
+				EnergyComp->GainEnergy(EnergyRecover);
+			}
+		}
+	}
 }
 
 void AInvasionPlayerCharacter::OnSphereBeginOverlap(

@@ -5,7 +5,6 @@
 
 #include "Characters/InvasionPlayerCharacter.h"
 #include "Player/InvasionPlayerController.h"
-#include "InvasionGameplayStatics.h"
 
 UInvasionPlayerAnimInstance::UInvasionPlayerAnimInstance()
 {
@@ -25,11 +24,11 @@ void UInvasionPlayerAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 	if (OwningPawn)
 	{
-		if (AInvasionPlayerController* PlayerController = UInvasionGameplayStatics::GetInvasionPlayerController(GetWorld()))
+		if (AController* Controller = OwningPawn->GetController())
 		{
 			// Update aim offset
 			{
-				FRotator ControlRot = PlayerController->GetControlRotation();
+				FRotator ControlRot = Controller->GetControlRotation();
 				FRotator ActorRot = OwningPawn->GetActorRotation();
 
 				float TargetPitch = FRotator::NormalizeAxis(ControlRot.Pitch) - FRotator::NormalizeAxis(ActorRot.Pitch);

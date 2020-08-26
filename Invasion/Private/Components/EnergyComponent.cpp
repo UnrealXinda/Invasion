@@ -12,6 +12,14 @@ UEnergyComponent::UEnergyComponent()
 
 void UEnergyComponent::CostEnergy(float CostAmount)
 {
+	if (GetOwner() == UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
+	{
+		if (InvasionDebug::g_PlayerInfiniteEnergy)
+		{
+			return;
+		}
+	}
+
 	if (CostAmount >= 0.0f)
 	{
 		float ActualCost = FMath::Min(CostAmount, Energy);

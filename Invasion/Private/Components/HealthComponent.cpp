@@ -38,6 +38,14 @@ float UHealthComponent::GetMaxHealth() const
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
 	AController* InstigatedBy, AActor* DamageCauser)
 {
+	if (GetOwner() == UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
+	{
+		if (InvasionDebug::g_PlayerGodMode)
+		{
+			return;
+		}
+	}
+
 	if (Damage >= 0.0f)
 	{
 		float ActualDamage = FMath::Min(Damage, Health);

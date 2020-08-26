@@ -15,4 +15,10 @@ namespace InvasionDebug
 
 	extern int g_DebugDrawAISightTrace;
 	extern FAutoConsoleVariableRef CVarDebugDrawAISightTrace;
+
+	extern int g_PlayerGodMode;
+	extern FAutoConsoleVariableRef CVarPlayerGodMode;
+
+	extern int g_PlayerInfiniteEnergy;
+	extern FAutoConsoleVariableRef CVarPlayerInfiniteEnergy;
 }

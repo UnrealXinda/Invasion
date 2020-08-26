@@ -68,6 +68,24 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	class AController*, InstigatedBy
 );
 
+/** Delegate type for callbacks when weapon starts aiming */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnWeaponStartAimSignature,
+	/* The weapon that is in question */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this action */
+	class AController*, InstigatedBy
+);
+
+/** Delegate type for callbacks when weapon stops aiming */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnWeaponStopAimSignature,
+	/* The weapon that is in question */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this action */
+	class AController*, InstigatedBy
+);
+
 /** Delegate type for callbacks when weapon hits something */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
 	FOnWeaponHitSignature,
@@ -145,6 +163,12 @@ public:
 	FOnWeaponFireSignature OnWeaponFire;
 
 	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponStartAimSignature OnWeaponStartAim;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponStopAimSignature OnWeaponStopAim;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
 	FOnWeaponHitSignature OnWeaponHit;
 
 public:
@@ -166,6 +190,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void StopFire();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StartAim();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StopAim();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void SetWeaponVisibility(bool bVisible);

@@ -23,5 +23,9 @@ public:
 	virtual void OnEquipWeapon(class AInvasionWeapon* Weapon);
 
 	virtual void OnUnequipWeapon(class AInvasionWeapon* Weapon);
-	
+
+protected:
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly)
+	class AInvasionWeapon* OwnerWeapon;
 };

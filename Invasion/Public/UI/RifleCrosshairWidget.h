@@ -34,7 +34,4 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "Crosshair")
 	float CrosshairZoom;
-
-	UPROPERTY()
-	class AInvasionWeapon* Rifle;
 };

@@ -18,9 +18,9 @@ void URifleCrosshairWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (Rifle)
+	if (OwnerWeapon)
 	{
-		float SpreadRate = Rifle->CrosshairZoomOutPerSecond;
+		float SpreadRate = OwnerWeapon->CrosshairZoomOutPerSecond;
 		CrosshairZoom = FMath::Clamp(CrosshairZoom - InDeltaTime * SpreadRate, 0.0f, 1.0f);
 	}
 }
@@ -30,31 +30,20 @@ void URifleCrosshairWidget::OnEquipWeapon(AInvasionWeapon* Weapon)
 	Super::OnEquipWeapon(Weapon);
 
 	CrosshairZoom = 0;
-
-	if (Weapon)
-	{
-		Rifle = Weapon;
-		Weapon->OnWeaponFire.AddDynamic(this, &URifleCrosshairWidget::OnWeaponFire);
-	}
+	Weapon->OnWeaponFire.AddDynamic(this, &URifleCrosshairWidget::OnWeaponFire);
 }
 
 void URifleCrosshairWidget::OnUnequipWeapon(AInvasionWeapon* Weapon)
 {
 	Super::OnUnequipWeapon(Weapon);
 
-	if (Weapon)
-	{
-		check(Weapon == Rifle);
-
-		Rifle = nullptr;
-		Weapon->OnWeaponFire.RemoveDynamic(this, &URifleCrosshairWidget::OnWeaponFire);
-	}
+	Weapon->OnWeaponFire.RemoveDynamic(this, &URifleCrosshairWidget::OnWeaponFire);
 }
 
 void URifleCrosshairWidget::OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy)
 {
-	check(Weapon == Rifle);
+	check(Weapon && Weapon == OwnerWeapon);
 
-	float SpreadRate = Rifle->CrosshairZoomInPerFire;
+	float SpreadRate = OwnerWeapon->CrosshairZoomInPerFire;
 	CrosshairZoom = FMath::Clamp(CrosshairZoom + SpreadRate, 0.0f, 1.0f);
 }

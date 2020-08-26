@@ -491,8 +491,7 @@ void AInvasionPlayerController::OnPressAim()
 
 	if (PlayerCharacter && PlayerCharacter->CanAim())
 	{
-		PlayerCharacter->AimState = EAimState::Aiming;
-		PlayerCharacter->bUseControllerRotationYaw = true;
+		PlayerCharacter->StartAim();
 	}
 }
 
@@ -500,15 +499,7 @@ void AInvasionPlayerController::OnReleaseAim()
 {
 	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
-		PlayerCharacter->AimState = EAimState::Idle;
-		PlayerCharacter->bUseControllerRotationYaw = false;
-
-		// If taking cover, reorient the character to align with the cover rotation
-		if (PlayerCharacter->CoverState == ECoverState::InCover)
-		{
-			ACoverVolume* CurrentCover = PlayerCharacter->CurrentCoverVolume;
-			PlayerCharacter->SetActorRotation(CurrentCover->GetActorRotation());
-		}
+		PlayerCharacter->StopAim();
 	}
 }
 

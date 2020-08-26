@@ -197,9 +197,11 @@ bool AInvasionCharacter::TryTakeCover()
 		switch (ClosestCover->CoverType)
 		{
 		case ECoverType::Low:
+			Crouch();
 			CoverState = ECoverState::LowIn;
 			break;
 		case ECoverType::High:
+			UnCrouch();
 			CoverState = ECoverState::HighIn;
 			break;
 		}
@@ -249,6 +251,7 @@ bool AInvasionCharacter::TryUntakeCover()
 				CoverState = ECoverState::HighOut;
 			}
 
+			UnCrouch();
 			CurrentCoverVolume = nullptr;
 		}
 
@@ -314,6 +317,22 @@ void AInvasionCharacter::StopFire()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StopFire();
+	}
+}
+
+void AInvasionCharacter::StartAim()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StartAim();
+	}
+}
+
+void AInvasionCharacter::StopAim()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StopAim();
 	}
 }
 

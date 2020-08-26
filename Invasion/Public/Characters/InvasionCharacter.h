@@ -103,6 +103,12 @@ public:
 	virtual bool CanTakeCover() const;
 
 	UFUNCTION(BlueprintCallable)
+	virtual void StartAim();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StopAim();
+
+	UFUNCTION(BlueprintCallable)
 	virtual void StartFire();
 
 	UFUNCTION(BlueprintCallable)

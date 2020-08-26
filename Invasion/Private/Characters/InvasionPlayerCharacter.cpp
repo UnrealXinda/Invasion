@@ -290,6 +290,35 @@ bool AInvasionPlayerCharacter::CanTakeCover() const
 		&& DashState == EDashState::Idle;
 }
 
+void AInvasionPlayerCharacter::StartAim()
+{
+	Super::StartAim();
+
+	AimState = EAimState::Aiming;
+	bUseControllerRotationYaw = true;
+	UnCrouch();
+}
+
+void AInvasionPlayerCharacter::StopAim()
+{
+	Super::StopAim();
+
+	AimState = EAimState::Idle;
+	bUseControllerRotationYaw = false;
+
+	// If taking cover, reorient the character to align with the cover rotation
+	if (CoverState == ECoverState::InCover && CurrentCoverVolume)
+	{
+		SetActorRotation(CurrentCoverVolume->GetActorRotation());
+
+		// Get back to crouch position if taking low cover
+		if (CurrentCoverVolume && CurrentCoverVolume->CoverType == ECoverType::Low)
+		{
+			Crouch();
+		}
+	}
+}
+
 void AInvasionPlayerCharacter::StartFire()
 {
 	Super::StartFire();
@@ -392,11 +421,6 @@ void AInvasionPlayerCharacter::OnSphereBeginOverlap(
 	// TODO: show on screen widget to imply availablity for execution
 }
 
-void AInvasionPlayerCharacter::EnableSelfRecover()
-{
-	bCanSelfRecover = true;
-}
-
 void AInvasionPlayerCharacter::OnPlayerTakeAnyDamage(
 	AActor*                  DamagedActor,
 	float                    Damage,
@@ -411,8 +435,12 @@ void AInvasionPlayerCharacter::OnPlayerTakeAnyDamage(
 		bCanSelfRecover = false;
 
 		float TimeBeforeSelfRecover = GameMode->PlayerHealthConfig->TimeBeforeSelfRecover;
+		FTimerDelegate TimerCallback;
+
+		TimerCallback.BindLambda([this]{ bCanSelfRecover = true; });
+
 		GetWorldTimerManager().ClearTimer(ResetSelfRecoverTimerHandle);
-		GetWorldTimerManager().SetTimer(ResetSelfRecoverTimerHandle, this, &AInvasionPlayerCharacter::EnableSelfRecover, TimeBeforeSelfRecover, false);
+		GetWorldTimerManager().SetTimer(ResetSelfRecoverTimerHandle, TimerCallback, TimeBeforeSelfRecover, false);
 	}
 }
 

@@ -98,6 +98,10 @@ public:
 
 	virtual bool CanTakeCover() const override;
 
+	virtual void StartAim() override;
+
+	virtual void StopAim() override;
+
 	virtual void StartFire() override;
 
 	virtual void StopFire() override;
@@ -163,9 +167,6 @@ protected:
 		int32                OtherBodyIndex,
 		bool                 bFromSweep,
 		const FHitResult&    SweepResult);
-
-	UFUNCTION()
-	void EnableSelfRecover();
 
 	UFUNCTION()
 	void OnPlayerTakeAnyDamage(

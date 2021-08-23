@@ -31,8 +31,12 @@ UCameraShake* AInvasionPlayerCameraManager::PlayCameraShakeSingleInstance(
 	if (ShakeClass && CachedCameraShakeMod)
 	{
 		// Look for existing instance of same class
-		for (UCameraShake* ShakeInst : CachedCameraShakeMod->ActiveShakes)
+		TArray<FActiveCameraShakeInfo> ActiveShakes;
+		CachedCameraShakeMod->GetActiveCameraShakes(ActiveShakes);
+
+		for (const FActiveCameraShakeInfo& ShakeInfo : ActiveShakes)
 		{
+			UCameraShake* ShakeInst = ShakeInfo.ShakeInstance;
 			if (ShakeInst && (ShakeClass == ShakeInst->GetClass()))
 			{
 				ShakeInst->ShakeScale = Scale;

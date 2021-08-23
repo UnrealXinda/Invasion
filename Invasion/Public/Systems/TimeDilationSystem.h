@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Utilities/SimpleTimeline.h"
+#include "InvasionEnums.h"
 #include "TimeDilationSystem.generated.h"
 
 /** Delegate type for callbacks for finished playback of time dilation curves */

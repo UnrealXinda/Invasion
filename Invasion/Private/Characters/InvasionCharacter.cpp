@@ -41,6 +41,26 @@ AInvasionCharacter::AInvasionCharacter()
 	CurrentCoverVolume = nullptr;
 }
 
+float AInvasionCharacter::GetDefaultHealth() const
+{
+	return HealthComp->GetDefaultHealth();
+}
+
+float AInvasionCharacter::GetCurrentHealth() const
+{
+	return HealthComp->GetHealth();
+}
+
+float AInvasionCharacter::GetMaxHealth() const
+{
+	return HealthComp->GetMaxHealth();
+}
+
+float AInvasionCharacter::GetCurrentHealthPercentage() const
+{
+	return GetCurrentHealth() / GetMaxHealth();
+}
+
 // Called when the game starts or when spawned
 void AInvasionCharacter::BeginPlay()
 {
@@ -57,6 +77,7 @@ void AInvasionCharacter::BeginPlay()
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AInvasionCharacter::OnCapsuleEndOverlap);
 
 	HealthComp->OnCharacterDeath.AddDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
+	HealthComp->OnCharacterExecuted.AddDynamic(this, &AInvasionCharacter::OnCharacterExecuted_Internal);
 }
 
 void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
@@ -65,6 +86,91 @@ void AInvasionCharacter::InvasionTick_Implementation(float DeltaTime)
 
 void AInvasionCharacter::MoveCharacter(FVector WorldDirection, float ScaleValue /*= 1.0F*/)
 {
+}
+
+bool AInvasionCharacter::CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor /*= NULL*/) const
+{
+	FVector HitLoc;
+	FVector CharacterLoc = GetActorLocation();
+	FVector TraceStart = ObserverLocation;
+	FVector TraceEnd = CharacterLoc;
+	AActor* ThisActor = const_cast<AInvasionCharacter*>(this);
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Add(const_cast<AActor*>(IgnoreActor));
+	IgnoredActors.Add(ThisActor);
+
+	bool bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, (bool)InvasionDebug::g_DebugDrawAISightTrace);
+	++NumberOfLoSChecksPerformed;
+
+	if (!bHit)
+	{
+		OutSightStrength = 1.0f;
+		OutSeenLocation = HitLoc;
+		return true;
+	}
+
+	const float DistSqr = (TraceStart - TraceEnd).SizeSquared();
+	if (DistSqr > FARSIGHTTHRESHOLDSQUARED)
+	{
+		return false;
+	}
+
+	float CylinderRadius, CylinderHeight;
+	GetSimpleCollisionCylinder(CylinderRadius, CylinderHeight);
+
+	// only check sides if width of other is significant compared to distance
+	if (CylinderRadius * CylinderRadius / DistSqr < 0.0001f)
+	{
+		return false;
+	}
+	//try checking sides - look at dist to four side points, and cull furthest and closest
+	FVector Points[4];
+	Points[0] = CharacterLoc - FVector(CylinderRadius, -1 * CylinderRadius, 0);
+	Points[1] = CharacterLoc + FVector(CylinderRadius, CylinderRadius, 0);
+	Points[2] = CharacterLoc - FVector(CylinderRadius, CylinderRadius, 0);
+	Points[3] = CharacterLoc + FVector(CylinderRadius, -1 * CylinderRadius, 0);
+	int32 IndexMin = 0;
+	int32 IndexMax = 0;
+	float CurrentMax = (Points[0] - TraceStart).SizeSquared();
+	float CurrentMin = CurrentMax;
+	for (int32 PointIndex = 1; PointIndex < 4; PointIndex++)
+	{
+		const float NextSize = (Points[PointIndex] - TraceStart).SizeSquared();
+		if (NextSize > CurrentMin)
+		{
+			CurrentMin = NextSize;
+			IndexMax = PointIndex;
+		}
+		else if (NextSize < CurrentMax)
+		{
+			CurrentMax = NextSize;
+			IndexMin = PointIndex;
+		}
+	}
+
+	int LoSCount = 0;
+	int RaycastCount = 0;
+
+	for (int32 PointIndex = 0; PointIndex < 4; PointIndex++)
+	{
+		if ((PointIndex != IndexMin) && (PointIndex != IndexMax))
+		{
+			TraceEnd = Points[PointIndex];
+			bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, (bool)InvasionDebug::g_DebugDrawAISightTrace);
+			++NumberOfLoSChecksPerformed;
+			++RaycastCount;
+
+			if (!bHit)
+			{
+				++LoSCount;
+				OutSeenLocation = HitLoc;
+			}
+		}
+	}
+
+	OutSightStrength = static_cast<float>(LoSCount) / RaycastCount;
+
+	return LoSCount > 0;
 }
 
 bool AInvasionCharacter::TryTakeCover()
@@ -91,9 +197,11 @@ bool AInvasionCharacter::TryTakeCover()
 		switch (ClosestCover->CoverType)
 		{
 		case ECoverType::Low:
+			Crouch();
 			CoverState = ECoverState::LowIn;
 			break;
 		case ECoverType::High:
+			UnCrouch();
 			CoverState = ECoverState::HighIn;
 			break;
 		}
@@ -102,6 +210,16 @@ bool AInvasionCharacter::TryTakeCover()
 
 		// Reorient the character so that its movement follows along the cover volume
 		SetActorRotation(CurrentCoverVolume->GetActorRotation());
+
+		// Facing direction when taking cover depending on which side is closer to character
+		FVector LeftCompLoc = CurrentCoverVolume->GetLeftBlockVolumeLocation();
+		FVector RightCompLoc = CurrentCoverVolume->GetRightBlockVolumeLocation();
+		FVector CharacterLoc = GetActorLocation();
+		float LeftDistSqr = FVector::DistSquared2D(LeftCompLoc, CharacterLoc);
+		float RightDistSqr = FVector::DistSquared2D(RightCompLoc, CharacterLoc);
+		LastMovementDir = (LeftDistSqr < RightDistSqr) ? EMoveDirection::Left : EMoveDirection::Right;
+
+		return true;
 	}
 
 	return false;
@@ -109,30 +227,49 @@ bool AInvasionCharacter::TryTakeCover()
 
 bool AInvasionCharacter::TryUntakeCover()
 {
-	bool bIsTakingCover = !!CurrentCoverVolume;
 	bool bIsInCoverState = (CoverState == ECoverState::InCover);
 	bool bIsAiming = (AimState == EAimState::Aiming);
 
-	bool bCanUntakeCover = bIsTakingCover && bIsInCoverState && !bIsAiming;
-
-	if (bCanUntakeCover)
+	if (bIsInCoverState)
 	{
-		switch (CurrentCoverVolume->CoverType)
+		if (!bIsAiming)
 		{
-		case ECoverType::Low:
-			CoverState = ECoverState::LowOut;
-			break;
-		case ECoverType::High:
-			CoverState = ECoverState::HighOut;
-			break;
+			if (CurrentCoverVolume)
+			{
+				switch (CurrentCoverVolume->CoverType)
+				{
+				case ECoverType::Low:
+					CoverState = ECoverState::LowOut;
+					break;
+				case ECoverType::High:
+					CoverState = ECoverState::HighOut;
+					break;
+				}
+			}
+			else
+			{
+				CoverState = ECoverState::HighOut;
+			}
+
+			UnCrouch();
+			CurrentCoverVolume = nullptr;
 		}
 
-		CurrentCoverVolume = nullptr;
-
-		return true;
+		return !bIsAiming;
 	}
 
-	return false;
+	return true;
+}
+
+void AInvasionCharacter::OnCharacterKilled()
+{
+	HealthComp->OnCharacterDeath.RemoveDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
+	HealthComp->OnHealthChanged.RemoveDynamic(this, &AInvasionCharacter::OnHealthChanged_Internal);
+
+	GetMovementComponent()->StopMovementImmediately();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	DetachFromControllerPendingDestroy();
 }
 
 bool AInvasionCharacter::CanMove() const
@@ -180,6 +317,22 @@ void AInvasionCharacter::StopFire()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StopFire();
+	}
+}
+
+void AInvasionCharacter::StartAim()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StartAim();
+	}
+}
+
+void AInvasionCharacter::StopAim()
+{
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StopAim();
 	}
 }
 
@@ -257,9 +410,9 @@ void AInvasionCharacter::OnWeaponFire(AInvasionWeapon* Weapon, AController* Inst
 
 		if (WeaponAnimation && WeaponAnimation->FireMontage)
 		{
-			if (USkeletalMeshComponent* Mesh = GetMesh())
+			if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
 			{
-				if (UAnimInstance* AnimInstance = Cast<UAnimInstance>(Mesh->GetAnimInstance()))
+				if (UAnimInstance* AnimInstance = Cast<UAnimInstance>(SkeletalMesh->GetAnimInstance()))
 				{
 					AnimInstance->Montage_Play(WeaponAnimation->FireMontage);
 				}
@@ -274,7 +427,7 @@ void AInvasionCharacter::OnWeaponFire_Internal(AInvasionWeapon* Weapon, AControl
 }
 
 void AInvasionCharacter::OnHealthChanged(
-	UHealthComponent*        HealthComp,
+	UHealthComponent*        HealthComponent,
 	float                    Health,
 	float                    HealthDelta,
 	const UDamageType*       DamageType,
@@ -293,10 +446,7 @@ void AInvasionCharacter::OnCharacterDeath(
 	AActor*                  DamageCauser
 )
 {
-	if (CurrentWeapon)
-	{
-		CurrentWeapon->StopFire();
-	}
+	StopFire();
 
 	UAnimMontage* MontageToPlay;
 
@@ -311,11 +461,16 @@ void AInvasionCharacter::OnCharacterDeath(
 	}
 
 	GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage);
+}
 
-	GetMovementComponent()->StopMovementImmediately();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+void AInvasionCharacter::OnCharacterExecuted(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
 
-	DetachFromControllerPendingDestroy();
 }
 
 void AInvasionCharacter::OnHealthChanged_Internal(
@@ -328,6 +483,7 @@ void AInvasionCharacter::OnHealthChanged_Internal(
 )
 {
 	OnHealthChanged(HealthComponent, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
+	ReceiveOnHealthChanged(HealthComponent, Health, HealthDelta, DamageType, InstigatedBy, DamageCauser);
 }
 
 void AInvasionCharacter::OnCharacterDeath_Internal(
@@ -338,6 +494,19 @@ void AInvasionCharacter::OnCharacterDeath_Internal(
 	AActor*                  DamageCauser
 )
 {
+	OnCharacterKilled();
 	OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
-	HealthComp->OnCharacterDeath.RemoveDynamic(this, &AInvasionCharacter::OnCharacterDeath_Internal);
+	ReceiveOnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+}
+
+void AInvasionCharacter::OnCharacterExecuted_Internal(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	OnCharacterKilled();
+	OnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
+	ReceiveOnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
 }

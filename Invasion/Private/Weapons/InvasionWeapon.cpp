@@ -2,6 +2,7 @@
 
 
 #include "Weapons/InvasionWeapon.h"
+#include "Weapons/WeaponDamageInfo.h"
 #include "Characters/InvasionPlayerCharacter.h"
 #include "Player/InvasionPlayerController.h"
 
@@ -65,6 +66,28 @@ void AInvasionWeapon::StartFire()
 void AInvasionWeapon::StopFire()
 {
 
+}
+
+void AInvasionWeapon::StartAim()
+{
+	if (APawn* OwnerActor = Cast<APawn>(GetOwner()))
+	{
+		if (AController* InstigatedBy = OwnerActor->GetController())
+		{
+			OnWeaponStartAim.Broadcast(this, InstigatedBy);
+		}
+	}
+}
+
+void AInvasionWeapon::StopAim()
+{
+	if (APawn* OwnerActor = Cast<APawn>(GetOwner()))
+	{
+		if (AController* InstigatedBy = OwnerActor->GetController())
+		{
+			OnWeaponStopAim.Broadcast(this, InstigatedBy);
+		}
+	}
 }
 
 void AInvasionWeapon::SetWeaponVisibility(bool bVisible)

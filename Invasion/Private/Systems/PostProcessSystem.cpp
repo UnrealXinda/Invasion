@@ -299,7 +299,6 @@ void APostProcessSystem::InstantiatePostProcessSettings()
 		FPostProcess##ValueType##Setting Setting;                         \
 		Setting.SettingType = EPostProcess##ValueType##SettingType::Type; \
 		Setting.Target = &PostProcessComp->Settings.Type;                 \
-		PostProcessComp->Settings.bOverride_##Type = true;                \
 		PostProcess##ValueType##Settings.Add(Setting);                    \
 	} while (0);
 

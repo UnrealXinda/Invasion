@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(editinlinenew, Blueprintable, const, hidecategories = Object, collapsecategories, meta = (ShowWorldContextPin, DisplayName = "Invasion: Enable Root Motion Rotation"))
 class INVASION_API UAnimNotify_EnableRootMotionRot : public UAnimNotify
 {
 	GENERATED_BODY()

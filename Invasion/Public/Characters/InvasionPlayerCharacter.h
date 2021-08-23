@@ -22,6 +22,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
 	EDashState DashState;
 
+	/** The scan state of the character */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
+	EScanState ScanState;
+
 	/** The execute state of the character */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = States)
 	EExecuteState ExecuteState;
@@ -46,34 +50,43 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float SprintRotationInterpSpeed;
 
-	virtual FVector GetPawnViewLocation() const override;
-
-	virtual void InvasionTick_Implementation(float DeltaTime) override;
-
-protected:
-
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
-
-	/** The animation montage used for dashing */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
-	class UAnimMontage* DashMontage;
-
 public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ExecuteCharacter(AInvasionCharacter* Victim);
 
-	UFUNCTION(BlueprintCallable)
-	virtual bool CanDash() const;	
+	UFUNCTION(BlueprintNativeEvent)
+	void BeginScan();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void EndScan();
+
+	UFUNCTION(BlueprintPure)
+	TArray<AActor*> GetExecutableCharacters() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanDash() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanBeginScan() const;
+
+	UFUNCTION(BlueprintPure)
+	virtual bool CanEndScan() const;
 
 	UFUNCTION(BlueprintPure)
 	virtual bool CanExecute() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetDefaultEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetMaxEnergy() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentEnergyPercentage() const;
 
 	virtual bool CanMove() const override;
 
@@ -85,6 +98,10 @@ public:
 
 	virtual bool CanTakeCover() const override;
 
+	virtual void StartAim() override;
+
+	virtual void StopAim() override;
+
 	virtual void StartFire() override;
 
 	virtual void StopFire() override;
@@ -95,12 +112,69 @@ public:
 
 	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon) override;
 
+	virtual FVector GetPawnViewLocation() const override;
+
+	virtual void InvasionTick_Implementation(float DeltaTime) override;
+
+	virtual void PostInitializeComponents() override;
+
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = NULL) const override;
+
 	void Dash(FRotator Direction);
+
+	void Heal(float RecoverAmount);
+
+protected:
+
+	/** Camera boom positioning the camera behind the character */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;
+
+	/** Follow camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FollowCamera;
+
+	/** Sphere component used to detect overlapping enemy characters for execution */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	class USphereComponent* SphereComp;
+
+	/** Energy component for tracking current available energy */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	class UEnergyComponent* EnergyComp;
+
+	/** The animation montage used for dashing */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
+	class UAnimMontage* DashMontage;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = States)
+	bool bCanSelfRecover;
+
+	FTimerHandle ResetSelfRecoverTimerHandle;
 
 protected:
 
 	UFUNCTION()
 	void OnWeaponFire(class AInvasionWeapon* Weapon, class AController* InstigatedBy);
+
+	UFUNCTION()
+	void OnWeaponHit(class AInvasionWeapon* Weapon, class AController* InstigatedBy, AActor* HitActor, EPhysicalSurface PhysicalSurface);
+
+	UFUNCTION()
+	void OnSphereBeginOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor*              OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32                OtherBodyIndex,
+		bool                 bFromSweep,
+		const FHitResult&    SweepResult);
+
+	UFUNCTION()
+	void OnPlayerTakeAnyDamage(
+		AActor*                  DamagedActor,
+		float                    Damage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser);
 
 	virtual void OnCharacterDeath(
 		class UHealthComponent*  HealthComponent,
@@ -111,4 +185,8 @@ protected:
 	) override;
 
 	virtual void BeginPlay() override;
+
+	void TickHealth(float DeltaTime);
+
+	void TickEnergy(float DeltaTime);
 };

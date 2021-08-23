@@ -10,12 +10,12 @@
 #include "Player/InvasionPlayerController.h"
 #include "Player/InvasionPlayerCameraManager.h"
 
-#include "Systems/TimeDilationSystem.h"
 #include "Systems/CoverSystem.h"
-#include "Systems/PostProcessSystem.h"
 
 #include "Characters/InvasionCharacter.h"
 #include "Characters/InvasionPlayerCharacter.h"
+
+#include "Weapons/ExecutionDamageType.h"
 
 #include "Kismet/GameplayStatics.h"
 
@@ -78,9 +78,9 @@ void UInvasionGameplayStatics::PlayPostProcessEffect(
 	bool                                                bAffectedByGlobalTimeDilation
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->PlayPostProcessEffect(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+		System->PlayPostProcessEffect(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
 	}
 }
 
@@ -94,9 +94,9 @@ void UInvasionGameplayStatics::PlayPostProcessScalarSetting(
 	bool                                                       bAffectedByGlobalTimeDilation
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->PlayPostProcessScalarSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+		System->PlayPostProcessScalarSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
 	}
 }
 
@@ -110,9 +110,9 @@ void UInvasionGameplayStatics::PlayPostProcessVectorSetting(
 	bool                                                       bAffectedByGlobalTimeDilation
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->PlayPostProcessVectorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+		System->PlayPostProcessVectorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
 	}
 }
 
@@ -126,9 +126,9 @@ void UInvasionGameplayStatics::PlayPostProcessColorSetting(
 	bool                                                      bAffectedByGlobalTimeDilation
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->PlayPostProcessColorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
+		System->PlayPostProcessColorSetting(Type, OnFinishedCallback, PlaybackCurve, HandlerType, PlaybackRate, bAffectedByGlobalTimeDilation);
 	}
 }
 
@@ -139,9 +139,9 @@ void UInvasionGameplayStatics::SetPostProcessEffectControlAmount(
 	EPlaybackInterruptType HandlerType
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->SetPostProcessEffectControlAmount(Type, ControlAmount, HandlerType);
+		System->SetPostProcessEffectControlAmount(Type, ControlAmount, HandlerType);
 	}
 }
 
@@ -165,9 +165,9 @@ void UInvasionGameplayStatics::SetPostProcessSettingVectorValue(
 	EPlaybackInterruptType        HandlerType
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->SetPostProcessSettingVectorValue(Type, Value, HandlerType);
+		System->SetPostProcessSettingVectorValue(Type, Value, HandlerType);
 	}
 }
 
@@ -178,20 +178,97 @@ void UInvasionGameplayStatics::SetPostProcessSettingColorValue(
 	EPlaybackInterruptType       HandlerType
 )
 {
-	if (APostProcessSystem* PostProcessSystem = GetPostProcessSystem(WorldContextObject))
+	if (APostProcessSystem* System = GetPostProcessSystem(WorldContextObject))
 	{
-		PostProcessSystem->SetPostProcessSettingColorValue(Type, Value, HandlerType);
+		System->SetPostProcessSettingColorValue(Type, Value, HandlerType);
 	}
 }
 
-bool UInvasionGameplayStatics::IsAngleInsideRange(float Angle, float Min, float Max)
+void UInvasionGameplayStatics::PlayTimeDilationCurveOnGroup(
+	const UObject*                                 WorldContextObject,
+	UCurveFloat*                                   PlaybackCurve,
+	ETimeGroup                                     AffectedTimeGroup,
+	const FOnTimeDilationPlaybackFinishedDelegate& OnFinishedCallback,
+	EPlaybackInterruptType                         InterruptType,
+	float                                          PlaybackRate,
+	bool                                           bAffectLowerGroup
+)
 {
-	FVector MinVec = FRotator(0.0f, Min, 0.0f).Vector();
-	FVector MaxVec = FRotator(0.0f, Max, 0.0f).Vector();
-	FVector CurrentVec = FRotator(0.0f, Angle, 0.0f).Vector();
+	if (ATimeDilationSystem* System = GetTimeDilationSystem(WorldContextObject))
+	{
+		System->PlayTimeDilationCurveOnGroup(PlaybackCurve, AffectedTimeGroup, OnFinishedCallback, InterruptType, PlaybackRate, bAffectLowerGroup);
+	}
+}
 
-	bool bOnSameSideOfMin = ((MinVec ^ CurrentVec).Z * (MinVec ^ MaxVec).Z > 0);
-	bool bOnSameSideOfMax = ((MaxVec ^ CurrentVec).Z * (MaxVec ^ MinVec).Z > 0);
+void UInvasionGameplayStatics::SetTimeDilationValueOnGroup(
+	const UObject*          WorldContextObject,
+	float                   TimeDilation,
+	ETimeGroup              AffectedTimeGroup,
+	EPlaybackInterruptType  InterruptType,
+	bool                    bAffectLowerGroup
+)
+{
+	if (ATimeDilationSystem* System = GetTimeDilationSystem(WorldContextObject))
+	{
+		System->SetTimeDilationValueOnGroup(TimeDilation, AffectedTimeGroup, InterruptType, bAffectLowerGroup);
+	}
+}
 
-	return bOnSameSideOfMin && bOnSameSideOfMax;
+float UInvasionGameplayStatics::GetTimeDilation(const UObject* WorldContextObject, ETimeGroup TimeGroup)
+{
+	if (ATimeDilationSystem* System = GetTimeDilationSystem(WorldContextObject))
+	{
+		return System->GetTimeDilation(TimeGroup);
+	}
+
+	return UGameplayStatics::GetGlobalTimeDilation(WorldContextObject);
+}
+
+void UInvasionGameplayStatics::ApplyExecutionDamage(AActor* DamagedActor, float BaseDamage, AController* EventInstigator, AActor* DamageCauser)
+{
+	UGameplayStatics::ApplyDamage(DamagedActor, BaseDamage, EventInstigator, DamageCauser, TSubclassOf<UExecutionDamageType>(UExecutionDamageType::StaticClass()));
+}
+
+bool UInvasionGameplayStatics::RaycastTest(
+	const UObject*         WorldContextObject,
+	const FVector&         Start,
+	const FVector&         End,
+	const TArray<AActor*>& IgnoredActors,
+	FVector&               OutHitLoc,
+	bool                   bTraceComplex,
+	bool                   bDebugDraw
+)
+{
+	if (!WorldContextObject)
+	{
+		return false;
+	}
+
+	FHitResult HitResult;
+	bool bHit;
+
+	if (UWorld* World = WorldContextObject->GetWorld())
+	{
+		if (bDebugDraw)
+		{
+			bHit = UKismetSystemLibrary::LineTraceSingle(WorldContextObject->GetWorld(), Start, End, UEngineTypes::ConvertToTraceType(ECC_Visibility),
+				bTraceComplex, IgnoredActors, EDrawDebugTrace::ForOneFrame, HitResult, true);
+		}
+		else
+		{
+			FCollisionQueryParams CollisionParams;
+			CollisionParams.bTraceComplex = bTraceComplex;
+			CollisionParams.AddIgnoredActors(IgnoredActors);
+			bHit = WorldContextObject->GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
+		}
+
+		if (bHit)
+		{
+			OutHitLoc = HitResult.Location;
+		}
+
+		return bHit;
+	}
+
+	return false;
 }

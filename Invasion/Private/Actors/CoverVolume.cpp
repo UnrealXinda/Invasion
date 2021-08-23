@@ -2,6 +2,7 @@
 
 
 #include "Actors/CoverVolume.h"
+#include "Invasion.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -11,43 +12,40 @@ ACoverVolume::ACoverVolume()
 	PrimaryActorTick.bCanEverTick = false;
 
 	CoverComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CoverComp"));
-	CoverComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	CoverComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	CoverComp->SetCanEverAffectNavigation(false);
+	CoverComp->SetCollisionProfileName(CollisionProfile_Cover);
 	RootComponent = CoverComp;
 
 	LeftBlockVolumeComp = CreateDefaultSubobject<UBoxComponent>(TEXT("LeftBlockVolumeComp"));
-	LeftBlockVolumeComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	LeftBlockVolumeComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	LeftBlockVolumeComp->SetCanEverAffectNavigation(false);
+	LeftBlockVolumeComp->SetCollisionProfileName(CollisionProfile_Cover);
 	LeftBlockVolumeComp->SetupAttachment(RootComponent);
 
 	RightBlockVolumeComp = CreateDefaultSubobject<UBoxComponent>(TEXT("RightBlockVolumeComp"));
-	RightBlockVolumeComp->SetCollisionResponseToAllChannels(ECR_Ignore);
-	RightBlockVolumeComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	RightBlockVolumeComp->SetCanEverAffectNavigation(false);
+	RightBlockVolumeComp->SetCollisionProfileName(CollisionProfile_Cover);
 	RightBlockVolumeComp->SetupAttachment(RootComponent);
 
 	AimingYawMin = -44.0f;
 	AimingYawMax = 44.0f;
 }
 
+FVector ACoverVolume::GetLeftBlockVolumeLocation() const
+{
+	return LeftBlockVolumeComp->GetComponentLocation();
+}
+
+FVector ACoverVolume::GetRightBlockVolumeLocation() const
+{
+	return RightBlockVolumeComp->GetComponentLocation();
+}
+
 bool ACoverVolume::HasActorReachedLeftEdge(const AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return false;
-	}
-
 	return LeftBlockVolumeComp->IsOverlappingActor(Actor);
 }
 
 bool ACoverVolume::HasActorReachedRightEdge(const AActor* Actor) const
 {
-	if (!Actor)
-	{
-		return false;
-	}
-
 	return RightBlockVolumeComp->IsOverlappingActor(Actor);
 }

@@ -31,6 +31,15 @@ public:
 	UFUNCTION(BlueprintPure)
 	const TArray<class ACoverVolume*>& GetAllCoverVolumes() const;
 
+	UFUNCTION(BlueprintPure)
+	const TArray<class ACoverVolume*>& GetAllLowCoverVolumes() const;
+
+	UFUNCTION(BlueprintPure)
+	const TArray<class ACoverVolume*>& GetAllHighCoverVolumes() const;
+
+	UFUNCTION(BlueprintPure)
+	TArray<class ACoverVolume*> GetAvailableLowCoverVolumes(FVector TargetLoc) const;
+
 protected:
 
 	// Called when the game starts or when spawned
@@ -38,4 +47,10 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Covers)
 	TArray<class ACoverVolume*> AllCoverVolumes;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Covers)
+	TArray<class ACoverVolume*> AllLowCoverVolumes;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Covers)
+	TArray<class ACoverVolume*> AllHighCoverVolumes;
 };

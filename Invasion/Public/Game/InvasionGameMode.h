@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Data/CharacterExecutionScriptData.h"
+#include "Data/PlayerHealthConfiguration.h"
+#include "Data/PlayerEnergyConfiguration.h"
 #include "InvasionGameMode.generated.h"
 
 class ATimeDilationSystem;
@@ -14,6 +17,20 @@ UCLASS()
 class INVASION_API AInvasionGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
+
+public:
+
+	/** The execution move info */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config")
+	UCharacterExecutionScriptData* ExecutionData;
+
+	/** The player health config */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (DisplayName = "Player Health Configuration"))
+	UPlayerHealthConfiguration* PlayerHealthConfig;
+
+	/** The player energy config */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Config", meta = (DisplayName = "Player Energy Configuration"))
+	UPlayerEnergyConfiguration* PlayerEnergyConfig;
 	
 public:
 
@@ -51,4 +68,8 @@ protected:
 
 #pragma endregion System Runtime Instances
 
+protected:
+
+	UFUNCTION(BlueprintPure)
+	const FExecutionScript& GetRandomExecutionScript() const;
 };

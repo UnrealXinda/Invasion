@@ -7,6 +7,7 @@
 #include "InvasionEnums.h"
 #include "Interfaces/InvasionTick.h"
 #include "GameFramework/Character.h"
+#include "Classes/Perception/AISightTargetInterface.h"
 #include "InvasionCharacter.generated.h"
 
 USTRUCT(BlueprintType)
@@ -24,7 +25,7 @@ struct INVASION_API FWeaponAnimation
 };
 
 UCLASS()
-class INVASION_API AInvasionCharacter : public ACharacter, public IInvasionTick
+class INVASION_API AInvasionCharacter : public ACharacter, public IInvasionTick, public IAISightTargetInterface
 {
 	GENERATED_BODY()
 
@@ -37,8 +38,6 @@ public:
  
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = TimeGroup)
 	float InvasionTimeDilation = 1.0f;
-
-public:
 
 	/** The movement state of the character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = States)
@@ -74,8 +73,19 @@ public:
 
 public:
 
-	// Sets default values for this character's properties
 	AInvasionCharacter();
+
+	UFUNCTION(BlueprintPure)
+	float GetDefaultHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetMaxHealth() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetCurrentHealthPercentage() const;
 
 	UFUNCTION(BlueprintPure)
 	virtual bool CanMove() const;
@@ -93,6 +103,12 @@ public:
 	virtual bool CanTakeCover() const;
 
 	UFUNCTION(BlueprintCallable)
+	virtual void StartAim();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StopAim();
+
+	UFUNCTION(BlueprintCallable)
 	virtual void StartFire();
 
 	UFUNCTION(BlueprintCallable)
@@ -104,11 +120,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual bool UnequipWeapon(class AInvasionWeapon* Weapon);
 
-	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
-
+	UFUNCTION(BlueprintCallable)
 	virtual bool TryTakeCover();
 
+	UFUNCTION(BlueprintCallable)
 	virtual bool TryUntakeCover();
+
+	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F);
+
+	virtual bool CanBeSeenFrom(const FVector& ObserverLocation, FVector& OutSeenLocation, int32& NumberOfLoSChecksPerformed, float& OutSightStrength, const AActor* IgnoreActor = NULL) const override;
 
 	FORCEINLINE class UIKComponent* GetIKComponent() const { return IKComp; }
 
@@ -137,7 +157,37 @@ protected:
 
 protected:
 
-	virtual void BeginPlay() override;	
+	virtual void BeginPlay() override;
+
+	/** Event called when the character health is changed. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnHealthChanged"))
+	void ReceiveOnHealthChanged(
+		class UHealthComponent*  HealthComponent,
+		float                    Health,
+		float                    HealthDelta,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	/** Event called when the character is dead. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnCharacterDeath"))
+	void ReceiveOnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	/** Event called when the character is executed. */
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "OnCharacterExecuted"))
+	void ReceiveOnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 
 	UFUNCTION()
 	virtual void OnCapsuleBeginOverlap(
@@ -176,6 +226,13 @@ protected:
 		AActor*                  DamageCauser
 	);
 
+	virtual void OnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
 private:
 
 	UFUNCTION()
@@ -199,4 +256,15 @@ private:
 		class AController*       InstigatedBy,
 		AActor*                  DamageCauser
 	);
+
+	UFUNCTION()
+	void OnCharacterExecuted_Internal(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	// Used for final cleanup
+	void OnCharacterKilled();
 };

@@ -35,6 +35,8 @@ public:
 
 	virtual void SetupInputComponent() override;
 
+	virtual void DisableInput(class APlayerController* PlayerController) override;
+
 #pragma region Movement
 
 	/** Called for forwards/backward input */
@@ -75,6 +77,9 @@ public:
 
 	/** Called for dashing in current input direction */
 	void OnPressDash();
+
+	/** Called when attempting to scan enemies */
+	void OnPressScan();
 
 	/** Called when attempting to take cover */
 	void OnPressTakeCover();
@@ -140,18 +145,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
 	TSubclassOf<class UCameraShake> SprintCameraShakeClass;
-
-	/** Cached AInvasionPlayerCharacter type instance to avoid casting when try to access the controlled pawn */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
-	class AInvasionPlayerCharacter* PlayerCharacter;
-
-	/** Cached AInvasionPlayerState type instance to avoid casting when try to access the player state */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
-	class AInvasionPlayerState* InvasionPlayerState;
-
-	/** Cached AInvasionPlayerCameraManager type instance to avoid casting when try to access the player camera manager */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
-	class AInvasionPlayerCameraManager* InvasionPlayerCameraManager;
 
 	/** Local cache of the last input vector */
 	FVector LastMovementInputVector;	

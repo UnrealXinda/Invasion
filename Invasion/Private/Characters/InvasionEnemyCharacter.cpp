@@ -2,15 +2,82 @@
 
 
 #include "Characters/InvasionEnemyCharacter.h"
+#include "Actors/InvasionParticle.h"
+#include "Animation/AnimMontage.h"
+#include "AIModule/Classes/BrainComponent.h"
+#include "AIModule/Classes/AIController.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
 
 AInvasionEnemyCharacter::AInvasionEnemyCharacter()
 {
-
 }
 
-bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
+void AInvasionEnemyCharacter::PauseCharacter()
+{
+	FString Reason;
+	PauseBehaviorTreeLogic(Reason);
+
+	GetMesh()->bPauseAnims = true;
+
+	StopFire();
+}
+
+void AInvasionEnemyCharacter::ResumeCharacter()
+{
+	FString Reason;
+	ResumeBehaviorTreeLogic(Reason);
+
+	GetMesh()->bPauseAnims = false;
+}
+
+void AInvasionEnemyCharacter::PauseBehaviorTreeLogic(const FString& Reason)
+{
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
+	{
+		if (UBrainComponent* BrainComp = AIController->GetBrainComponent())
+		{
+			BrainComp->PauseLogic(Reason);
+		}
+	}
+}
+
+void AInvasionEnemyCharacter::ResumeBehaviorTreeLogic(const FString& Reason)
+{
+	if (AAIController* AIController = Cast<AAIController>(GetController()))
+	{
+		if (UBrainComponent* BrainComp = AIController->GetBrainComponent())
+		{
+			BrainComp->ResumeLogic(Reason);
+		}
+	}
+}
+
+bool AInvasionEnemyCharacter::TryStartAim()
+{
+	bool bCanAim = CanAim();
+	if (bCanAim)
+	{
+		AimState = EAimState::Aiming;
+	}
+
+	return bCanAim;
+}
+
+bool AInvasionEnemyCharacter::TryEndAim()
+{
+	AimState = EAimState::Idle;
+
+	// If taking cover, reorient the character to align with the cover rotation
+	if (CoverState == ECoverState::InCover)
+	{
+		SetActorRotation(CurrentCoverVolume->GetActorRotation());
+	}
+
+	return true;
+}
+
+bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName, FVector Inpulse, FVector HitLocation)
 {
 	if (!IsBoneBroken(InBoneName))
 	{
@@ -22,17 +89,20 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
 		// Found valid breakable bone
 		if (Effect)
 		{
-			GetMesh()->BreakConstraint(FVector::ZeroVector, FVector::ZeroVector, InBoneName);
+			GetMesh()->BreakConstraint(Inpulse, HitLocation, InBoneName);
 
-			auto SpawnEffect = [this](TSubclassOf<AActor> EffectClass, FName SocketToAttach)
+			auto SpawnEffect = [this](TSubclassOf<AInvasionParticle> EffectClass, FName SocketToAttach)
 			{
 				FActorSpawnParameters Params;
 				Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 				if (EffectClass)
 				{
-					AActor* EffectActor = GetWorld()->SpawnActor<AActor>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
-					EffectActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketToAttach);
+					if (UWorld* World = GetWorld())
+					{
+						AInvasionParticle* EffectActor = World->SpawnActor<AInvasionParticle>(EffectClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+						EffectActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, SocketToAttach);
+					}
 				}
 			};
 
@@ -48,19 +118,36 @@ bool AInvasionEnemyCharacter::TryBreakBone(FName InBoneName)
 
 bool AInvasionEnemyCharacter::IsBoneBroken(FName InBoneName) const
 {
-	if (USkeletalMeshComponent* Mesh = GetMesh())
+	if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
 	{
-		int32 ConstraintIndex = Mesh->FindConstraintIndex(InBoneName);
+		int32 ConstraintIndex = SkeletalMesh->FindConstraintIndex(InBoneName);
 
 		if (ConstraintIndex != INDEX_NONE)
 		{
-			FConstraintInstance* Constraint = Mesh->Constraints[ConstraintIndex];
+			FConstraintInstance* Constraint = SkeletalMesh->Constraints[ConstraintIndex];
 			return Constraint->IsTerminated();
 		}
 	}
 
 	// By default, a non-existing constraint is broken
 	return true;
+}
+
+FExecutedAnimDef AInvasionEnemyCharacter::GetExecutedAnimDef(FName ExecutionName) const
+{
+	FExecutedAnimDef Result;
+	const FExecutedAnimDef* Def = ExecutedAnimDefs.FindByPredicate([ExecutionName](const FExecutedAnimDef& Def) { return Def.ExecutionName == ExecutionName; });
+
+	if (Def)
+	{
+		Result = *Def;
+	}
+	else if (ExecutedAnimDefs.Num() > 0)
+	{
+		Result = ExecutedAnimDefs[0];
+	}
+
+	return Result;
 }
 
 float AInvasionEnemyCharacter::GetMaxWalkSpeed() const
@@ -82,4 +169,68 @@ void AInvasionEnemyCharacter::MoveCharacter(FVector WorldDirection, float ScaleV
 		GetCharacterMovement()->MaxWalkSpeed = MaxRunSpeed;
 		break;
 	}
+}
+
+void AInvasionEnemyCharacter::InvasionTick_Implementation(float DeltaTime)
+{
+	Super::InvasionTick_Implementation(DeltaTime);
+	TickCharacterMovement(DeltaTime);
+}
+
+void AInvasionEnemyCharacter::TickCharacterMovement(float DeltaTime)
+{
+	float MaxSpeed = MaxSprintSpeed;
+
+	switch (CoverState)
+	{
+	case ECoverState::HighIn:
+	case ECoverState::HighOut:
+	case ECoverState::LowIn:
+	case ECoverState::LowOut:
+		MaxSpeed = FMath::Min(MaxSpeed, 0.0f);
+		break;
+	case ECoverState::InCover:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
+		break;
+	}
+
+	switch (MoveState)
+	{
+	case EMoveState::Sprint:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxSprintSpeed);
+		break;
+	case EMoveState::Walk:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxWalkSpeed);
+		break;
+	case EMoveState::Run:
+		MaxSpeed = FMath::Min(MaxSpeed, MaxRunSpeed);
+		break;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = MaxSpeed;
+}
+
+void AInvasionEnemyCharacter::OnCharacterDeath(
+	UHealthComponent*        HealthComponent,
+	float                    LastDamage,
+	const UDamageType*       DamageType,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	Super::OnCharacterDeath(HealthComponent, LastDamage, DamageType, InstigatedBy, DamageCauser);
+
+	DetachFromControllerPendingDestroy();
+}
+
+void AInvasionEnemyCharacter::OnCharacterExecuted(
+	class UHealthComponent*  HealthComponent,
+	float                    LastDamage,
+	class AController*       InstigatedBy,
+	AActor*                  DamageCauser
+)
+{
+	Super::OnCharacterExecuted(HealthComponent, LastDamage, InstigatedBy, DamageCauser);
+
+	DetachFromControllerPendingDestroy();
 }

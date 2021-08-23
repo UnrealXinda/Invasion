@@ -7,6 +7,7 @@
 #include "Player/InvasionPlayerCameraManager.h"
 
 #include "Characters/InvasionPlayerCharacter.h"
+#include "Characters/InvasionEnemyCharacter.h"
 #include "Weapons/InvasionWeapon.h"
 #include "Actors/CoverVolume.h"
 
@@ -40,14 +41,6 @@ AInvasionPlayerController::AInvasionPlayerController()
 void AInvasionPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Cache local variables to eliminate the necessity of casting every time we try to use it
-	PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
-	InvasionPlayerState = Cast<AInvasionPlayerState>(PlayerState);
-	InvasionPlayerCameraManager = Cast<AInvasionPlayerCameraManager>(PlayerCameraManager);
-
-	check(PlayerCharacter);
-	check(InvasionPlayerState);
 }
 
 void AInvasionPlayerController::SetupInputComponent()
@@ -74,6 +67,9 @@ void AInvasionPlayerController::SetupInputComponent()
 	InputComponent->BindAction(InvasionStatics::Execute, IE_Pressed, this, &AInvasionPlayerController::OnPressExecute);
 
 	// Left shoulder button actions
+	InputComponent->BindAction(InvasionStatics::Scan, IE_Pressed, this, &AInvasionPlayerController::OnPressScan);
+
+	// Right shoulder button actions
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Pressed, this, &AInvasionPlayerController::OnPressSprint);
 	InputComponent->BindAction(InvasionStatics::Sprint, IE_Released, this, &AInvasionPlayerController::OnReleaseSprint);
 
@@ -84,6 +80,13 @@ void AInvasionPlayerController::SetupInputComponent()
 	// Right trigger button actions
 	InputComponent->BindAction(InvasionStatics::Fire, IE_Pressed, this, &AInvasionPlayerController::OnPressFire);
 	InputComponent->BindAction(InvasionStatics::Fire, IE_Released, this, &AInvasionPlayerController::OnReleaseFire);
+}
+
+void AInvasionPlayerController::DisableInput(class APlayerController* PlayerController)
+{
+	Super::DisableInput(PlayerController);
+
+	LastMovementInputVector = FVector::ZeroVector;
 }
 
 void AInvasionPlayerController::InvasionTick_Implementation(float DeltaTime)
@@ -106,62 +109,80 @@ void AInvasionPlayerController::MoveRight(float Value)
 
 void AInvasionPlayerController::TickCharacterMovement(float DeltaTime)
 {
-	FVector MoveDirection = FVector::ZeroVector;
-	float NormalizedSpeed = 0.0f;
-	bool bCanMove = PlayerCharacter->CanMove();
-	bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
 
-	if (bCanMove && bHasInput)
+	// We are caching input vector and manually processing character movement. Therefore, we need to account for
+	// the case where input is disabled
+	if (PlayerCharacter && InputEnabled())
 	{
-		bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
-		bool bCanSprint = PlayerCharacter->CanSprint();
-		bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
+		FVector MoveDirection = FVector::ZeroVector;
+		float NormalizedSpeed = 0.0f;
+		bool bCanMove = PlayerCharacter->CanMove();
+		bool bHasInput = LastMovementInputVector.SizeSquared() > 0.0f;
 
-		if (bIsAiming)
+		if (bCanMove && bHasInput)
 		{
-			PlayerCharacter->MoveState = EMoveState::Walk;
+			bool bIsAiming = PlayerCharacter->AimState == EAimState::Aiming;
+			bool bCanSprint = PlayerCharacter->CanSprint();
+			bool bIsSprintKeyDown = IsActionKeyDown(InvasionStatics::Sprint);
+
+			if (bIsAiming)
+			{
+				PlayerCharacter->MoveState = EMoveState::Walk;
+			}
+
+			else if (bCanSprint && bIsSprintKeyDown)
+			{
+				PlayerCharacter->MoveState = EMoveState::Sprint;
+			}
+
+			else
+			{
+				PlayerCharacter->MoveState = EMoveState::Run;
+			}
+
+			MoveDirection = GetWorldInputVector();
+			NormalizedSpeed = 1.0f;
+
+			if (PlayerCharacter->CoverState == ECoverState::InCover && PlayerCharacter->CurrentCoverVolume)
+			{
+				bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
+				bool bMovingRight = LastMovementInputVector.Y >= 0.0f;
+				bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
+				bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
+
+				// Cannot move outside of cover
+				if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
+				{
+					NormalizedSpeed = 0.0f;
+				}
+
+				// Untake cover when input vector is almost opposite of character forward
+				if (FVector::DotProduct(MoveDirection, PlayerCharacter->GetActorForwardVector()) < -0.707f)
+				{
+					NormalizedSpeed = 0.0f;
+					PlayerCharacter->TryUntakeCover();
+				}
+			}
 		}
 
-		else if (bCanSprint && bIsSprintKeyDown)
-		{
-			PlayerCharacter->MoveState = EMoveState::Sprint;
-		}
-
+		// Reset move state to normal jog
 		else
 		{
 			PlayerCharacter->MoveState = EMoveState::Run;
 		}
 
-		MoveDirection = GetWorldInputVector();
-		NormalizedSpeed = 1.0f;
-
-		// Cannot move outside of cover
-		if (PlayerCharacter->CoverState == ECoverState::InCover)
-		{
-			bool bMovingLeft = LastMovementInputVector.Y < 0.0f;
-			bool bMovingRight = LastMovementInputVector.Y > 0.0f;
-			bool bAtCoverLeftEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedLeftEdge(PlayerCharacter);
-			bool bAtCoverRightEdge = PlayerCharacter->CurrentCoverVolume->HasActorReachedRightEdge(PlayerCharacter);
-
-			if ((bMovingLeft && bAtCoverLeftEdge) || (bMovingRight && bAtCoverRightEdge))
-			{
-				NormalizedSpeed = 0.0f;
-			}
-		}
+		PlayerCharacter->MoveCharacter(MoveDirection, NormalizedSpeed);
 	}
-
-	// Reset move state to normal jog
-	else
-	{
-		PlayerCharacter->MoveState = EMoveState::Run;
-	}
-
-	PlayerCharacter->MoveCharacter(MoveDirection, NormalizedSpeed);
 }
 
 void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
 {
-	if (PlayerCharacter)
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
+	// We are caching input vector and manually processing character movement. Therefore, we need to account for
+	// the case where input is disabled
+	if (PlayerCharacter && InputEnabled())
 	{
 		// Can only control character rotation if it is not driven by root motion, and if it is not controlled by 
 		// controller yaw.
@@ -195,9 +216,10 @@ void AInvasionPlayerController::TickCharacterRotation(float DeltaTime)
 
 void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 {
-	if (PlayerCharacter)
+	if (const AInvasionPlayerCharacter* PlayerCharacter = Cast<const AInvasionPlayerCharacter>(GetPawn()))
 	{
 		// Update view min/max pitch value
+		auto TickViewPitchValue = [this, PlayerCharacter]()
 		{
 			float MinPitch = ViewPitchMin;
 			float MaxPitch = ViewPitchMax;
@@ -211,11 +233,12 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 				MaxPitch = FMath::Min(MaxPitch, PlayerCharacter->CurrentWeapon->ZoomInfo.ZoomedPitchMax);
 			}
 
-			InvasionPlayerCameraManager->ViewPitchMin = MinPitch;
-			InvasionPlayerCameraManager->ViewPitchMax = MaxPitch;
-		}
+			PlayerCameraManager->ViewPitchMin = MinPitch;
+			PlayerCameraManager->ViewPitchMax = MaxPitch;
+		};
 
 		// Update view min/max yaw value
+		auto TickViewYawValue = [this, PlayerCharacter]()
 		{
 			if (PlayerCharacter->CoverState == ECoverState::Idle)
 			{
@@ -261,49 +284,74 @@ void AInvasionPlayerController::TickCameraManager(float DeltaTime)
 					}
 				}
 			}
-		}
+		};
 
 		// Play camera shake when sprinting
+		auto PlaySprintCameraShake = [this, PlayerCharacter]()
 		{
-			bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
-
-			if (bIsSprinting && SprintCameraShakeClass)
+			if (AInvasionPlayerCameraManager* CameraManager = Cast<AInvasionPlayerCameraManager>(PlayerCameraManager))
 			{
-				const float kMaxSpeed = 600.0f;
-				float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
-				float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / kMaxSpeed);
-				InvasionPlayerCameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
+				bool bIsSprinting = PlayerCharacter->MoveState == EMoveState::Sprint;
+
+				if (bIsSprinting && SprintCameraShakeClass)
+				{
+					float MaxSpeed = PlayerCharacter->GetCharacterMovement()->MaxWalkSpeed;
+					float CurrentSpeed = PlayerCharacter->GetVelocity().Size();
+					float Scale = FMath::Clamp(0.0f, 1.0f, CurrentSpeed / MaxSpeed);
+					CameraManager->PlayCameraShakeSingleInstance(SprintCameraShakeClass, Scale);
+				}
 			}
-		}
+		};
+
+		TickViewPitchValue();
+		TickViewYawValue();
+		PlaySprintCameraShake();
 	}
 }
 
 void AInvasionPlayerController::TickCameraFOV(float DeltaTime)
 {
+	const AInvasionPlayerCharacter* PlayerCharacter = Cast<const AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CurrentWeapon)
 	{
+		float NewFOV;
 		AInvasionWeapon* Weapon = PlayerCharacter->CurrentWeapon;
 
-		float TargetFOV;
-		float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
+		if (InputEnabled())
+		{
+			float TargetFOV;
+			float CurrentFOV = PlayerCameraManager->GetFOVAngle();
+			float ZoomInterpSpeed = Weapon->ZoomInfo.ZoomInterpSpeed;
 
-		switch (PlayerCharacter->AimState)
-		{
-		case EAimState::Aiming:
-		{
-			TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
-			break;
-		}
-		case EAimState::Idle:
-		default:
-		{
-			TargetFOV = Weapon->ZoomInfo.DefaultFOV;
-			break;
-		}
+			switch (PlayerCharacter->AimState)
+			{
+			case EAimState::Aiming:
+				TargetFOV = Weapon->ZoomInfo.ZoomedFOV;
+				break;
+			case EAimState::Idle:
+			default:
+				if (PlayerCharacter->MoveState == EMoveState::Sprint)
+				{
+					float CurrentVelocity = PlayerCharacter->GetVelocity().Size();
+					float Alpha = FMath::Clamp(CurrentVelocity / 800, 0.0f, 1.0f);
+					TargetFOV = FMath::Lerp(Weapon->ZoomInfo.DefaultFOV, 140.0f, Alpha);
+				}
+				else
+				{
+					TargetFOV = Weapon->ZoomInfo.DefaultFOV;
+				}
+				break;
+			}
+
+			NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
 		}
 
-		float CurrentFOV = PlayerCameraManager->GetFOVAngle();
-		float NewFOV = FMath::FInterpTo(CurrentFOV, TargetFOV, DeltaTime, ZoomInterpSpeed);
+		else
+		{
+			NewFOV = Weapon->ZoomInfo.DefaultFOV;
+		}
+
 		PlayerCameraManager->SetFOV(NewFOV);
 	}
 }
@@ -320,24 +368,32 @@ void AInvasionPlayerController::LookUp(float Rate)
 
 void AInvasionPlayerController::TurnAtRate(float Rate)
 {
-	float BaseTurnRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseTurnRate;
-	float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+	if (const AInvasionPlayerState* InvasionPlayerState = Cast<const AInvasionPlayerState>(PlayerState))
+	{
+		float BaseTurnRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseTurnRate;
+		float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
 
-	// calculate delta for this frame from the rate information
-	AddYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+		// calculate delta for this frame from the rate information
+		AddYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+	}
 }
 
 void AInvasionPlayerController::LookUpAtRate(float Rate)
 {
-	float BaseLookUpRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseLookUpRate;
-	float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+	if (const AInvasionPlayerState* InvasionPlayerState = Cast<const AInvasionPlayerState>(PlayerState))
+	{
+		float BaseLookUpRate = InvasionPlayerState->PlayerConfiguration->InputSetting.BaseLookUpRate;
+		float GlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
 
-	// calculate delta for this frame from the rate information
-	AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+		// calculate delta for this frame from the rate information
+		AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds() / GlobalTimeDilation);
+	}
 }
 
 void AInvasionPlayerController::OnPressDash()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanDash())
 	{
 		FRotator DashDirection;
@@ -364,9 +420,25 @@ void AInvasionPlayerController::OnPressDash()
 	}
 }
 
+void AInvasionPlayerController::OnPressScan()
+{
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
+	{
+		if (PlayerCharacter->CanBeginScan())
+		{
+			PlayerCharacter->BeginScan();
+		}
+
+		else if (PlayerCharacter->CanEndScan())
+		{
+			PlayerCharacter->EndScan();
+		}
+	}
+}
+
 void AInvasionPlayerController::OnPressTakeCover()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
 		switch (PlayerCharacter->CoverState)
 		{
@@ -386,9 +458,20 @@ void AInvasionPlayerController::OnPressTakeCover()
 
 void AInvasionPlayerController::OnPressExecute()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanExecute())
 	{
-		PlayerCharacter->ExecuteCharacter(nullptr);
+		TArray<AActor*> ExecutableCharacters = PlayerCharacter->GetExecutableCharacters();
+
+		if (ExecutableCharacters.Num() > 0)
+		{
+			// TODO: iterate through all characters to find the one closest to camera center
+			if (AInvasionEnemyCharacter* EnemyCharacter = Cast<AInvasionEnemyCharacter>(ExecutableCharacters[0]))
+			{
+				PlayerCharacter->ExecuteCharacter(EnemyCharacter);
+			}
+		}
 	}
 }
 
@@ -404,31 +487,26 @@ void AInvasionPlayerController::OnReleaseSprint()
 
 void AInvasionPlayerController::OnPressAim()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanAim())
 	{
-		PlayerCharacter->AimState = EAimState::Aiming;
-		PlayerCharacter->bUseControllerRotationYaw = true;
+		PlayerCharacter->StartAim();
 	}
 }
 
 void AInvasionPlayerController::OnReleaseAim()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
-		PlayerCharacter->AimState = EAimState::Idle;
-		PlayerCharacter->bUseControllerRotationYaw = false;
-
-		// If taking cover, reorient the character to align with the cover rotation
-		if (PlayerCharacter->CoverState == ECoverState::InCover)
-		{
-			ACoverVolume* CurrentCover = PlayerCharacter->CurrentCoverVolume;
-			PlayerCharacter->SetActorRotation(CurrentCover->GetActorRotation());
-		}
+		PlayerCharacter->StopAim();
 	}
 }
 
 void AInvasionPlayerController::OnPressFire()
 {
+	AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn());
+
 	if (PlayerCharacter && PlayerCharacter->CanFire())
 	{
 		PlayerCharacter->StartFire();
@@ -437,7 +515,7 @@ void AInvasionPlayerController::OnPressFire()
 
 void AInvasionPlayerController::OnReleaseFire()
 {
-	if (PlayerCharacter)
+	if (AInvasionPlayerCharacter* PlayerCharacter = Cast<AInvasionPlayerCharacter>(GetPawn()))
 	{
 		PlayerCharacter->StopFire();
 	}

@@ -16,10 +16,38 @@ class INVASION_API AInvasionRifle : public AInvasionWeapon
 
 public:
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class USkeletalMeshComponent* WeaponSkeletalMesh;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	class UParticleSystem* TracerEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	class UParticleSystem* MuzzleEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<class UCameraShake> CameraShakeClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	class UAnimationAsset* FireAnimation;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName TracerTargetName;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName MuzzleSocketName;
+
+	/** Used for simulating recoil for AI characters when using this rifle. 
+	/** Bullet spread in degrees */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	class UCurveFloat* RandomConeHalfDegreesPerDistance;
+
+public:
+
 	AInvasionRifle();
 
 	UFUNCTION(BlueprintPure)
-	float GetDamageAmountFromSurfaceType(EPhysicalSurface SurfaceType) const;
+	float GetDamage(EPhysicalSurface SurfaceType, float Distance) const;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -36,30 +64,7 @@ public:
 
 	void AddRecoilToController(class APlayerController* Controller) const;
 
-public:
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UStaticMeshComponent* MeshComp;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	class UParticleSystem* TracerEffect;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	class UParticleSystem* MuzzleEffect;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
-	TSubclassOf<class UCameraShake> CameraShakeClass;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	FName TracerTargetName;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	FName MuzzleSocketName;
-
-	/** Used for simulating recoil for AI characters when using this rifle. 
-	/** Bullet spread in degrees */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	class UCurveFloat* RandomConeHalfDegreesPerDistance;
+protected:
 
 	/** The last game time when fired */
 	float LastFireTime;
@@ -73,9 +78,13 @@ public:
 protected:
 
 	void PlayFireEffects();
+	void PlayFireAnimation();
 	void PlayMuzzleEffect();
 	void PlayImpactEffect(FVector Location, FRotator Rotation, EPhysicalSurface SurfaceType);
 	void PlayTracerEffect(FVector TargetPoint);
 	void PlayCameraShakeEffect();
 	void BroadcastOnWeaponFire();
+
+	void GetWeaponTraceForPlayer(FVector& TraceStart, FVector& TraceEnd, APawn* OwningPawn) const;
+	void GetWeaponTraceForAI(FVector& TraceStart, FVector& TraceEnd, APawn* OwningPawn) const;
 };

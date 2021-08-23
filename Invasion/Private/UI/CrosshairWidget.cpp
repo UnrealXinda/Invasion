@@ -17,16 +17,16 @@ void UCrosshairWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime
 
 void UCrosshairWidget::OnEquipWeapon(AInvasionWeapon* Weapon)
 {
-	if (Weapon)
-	{
-		AddToViewport();
-	}
+	check(Weapon);
+
+	OwnerWeapon = Weapon;
+	AddToViewport();
 }
 
 void UCrosshairWidget::OnUnequipWeapon(AInvasionWeapon* Weapon)
 {
-	if (Weapon)
-	{
-		RemoveFromParent();
-	}
+	check(Weapon && (OwnerWeapon == nullptr || Weapon == OwnerWeapon));
+
+	OwnerWeapon = nullptr;
+	RemoveFromParent();
 }

@@ -1,27 +1,41 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "HealthComponent.h"
+#include "Weapons/ExecutionDamageType.h"
 
-// Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
 {
 	DefaultHealth = 100.0f;
+	MaxHealth = 100.0f;
 }
-
 
 void UHealthComponent::Heal(float HealAmount)
 {
 	if (HealAmount > 0.0f)
 	{
-		float ActualHeal = FMath::Min(HealAmount, DefaultHealth - Health);
+		float ActualHeal = FMath::Min(HealAmount, MaxHealth - Health);
 		Health += ActualHeal;
 
 		OnHealthChanged.Broadcast(this, Health, ActualHeal, nullptr, nullptr, nullptr);
 	}
 }
 
-void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
+float UHealthComponent::GetHealth() const
+{
+	return Health;
+}
+
+float UHealthComponent::GetDefaultHealth() const
+{
+	return DefaultHealth;
+}
+
+float UHealthComponent::GetMaxHealth() const
+{
+	return MaxHealth;
+}
+
+void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
 	AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Damage >= 0.0f)
@@ -29,16 +43,31 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 		float ActualDamage = FMath::Min(Damage, Health);
 		Health -= ActualDamage;
 
-		OnHealthChanged.Broadcast(this, Health, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+		OnHealthChanged.Broadcast(this, Health, -ActualDamage, DamageType, InstigatedBy, DamageCauser);
 
 		if (Health == 0.0f)
 		{
-			OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+			if (DamageType->IsA<UExecutionDamageType>())
+			{
+				OnCharacterExecuted.Broadcast(this, ActualDamage, InstigatedBy, DamageCauser);
+			}
+
+			else
+			{
+				if (GetOwner() == UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
+            	{
+            		if (InvasionDebug::g_PlayerGodMode)
+            		{
+            			return;
+            		}
+            	}
+
+				OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
+			}
 		}
 	}
 }
 
-// Called when the game starts
 void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -50,5 +79,3 @@ void UHealthComponent::BeginPlay()
 
 	Health = DefaultHealth;
 }
-
-

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InvasionEnums.h"
 #include "GameFramework/Actor.h"
 #include "InvasionWeapon.generated.h"
 
@@ -44,6 +45,18 @@ struct FImpactEffect
 	/** The particle effect for this impact effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UParticleSystem* ImpactParticleEffect;
+
+	/** The sound to play when hitting the surface */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USoundBase* ImpactSound;
+
+	/** The volume multiplier of impact sound */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float VolumeMultiplier;
+
+	/** The pitch multiplier of impact sound */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float PitchMultiplier;
 };
 
 /** Delegate type for callbacks when weapon fires */
@@ -53,6 +66,37 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
 	class AInvasionWeapon*, Weapon,
 	/* The controller that instigates this attack */
 	class AController*, InstigatedBy
+);
+
+/** Delegate type for callbacks when weapon starts aiming */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnWeaponStartAimSignature,
+	/* The weapon that is in question */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this action */
+	class AController*, InstigatedBy
+);
+
+/** Delegate type for callbacks when weapon stops aiming */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnWeaponStopAimSignature,
+	/* The weapon that is in question */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this action */
+	class AController*, InstigatedBy
+);
+
+/** Delegate type for callbacks when weapon hits something */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+	FOnWeaponHitSignature,
+	/* The weapon that is firing */
+	class AInvasionWeapon*, Weapon,
+	/* The controller that instigates this attack */
+	class AController*, InstigatedBy,		
+	/* The actor that this weapon hit */
+	AActor*, HitActor,
+	/* The physical surface this weapon hit */
+	EPhysicalSurface, PhysicalSurface
 );
 
 UCLASS()
@@ -90,13 +134,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
 	float RecoilYawMax;
 
-	/** The base damage of the weapon */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
-	float BaseDamage;
+	/** The crosshair zoom in value increased per shot */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0, ClampMax = 1.0), Category = Weapon)
+	float CrosshairZoomInPerFire;
 
-	/** The fatal damage of the weapon, such as committing a headshot */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
-	float FatalDamage;
+	/** The crosshair spread recover rate */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = Weapon)
+	float CrosshairZoomOutPerSecond;
+
+	/** The damage info of the weapon */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = Weapon)
+	class UWeaponDamageInfo* DamageInfo;
 
 	/** RPM - Bullets per minute fired */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
@@ -113,6 +161,15 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = Events)
 	FOnWeaponFireSignature OnWeaponFire;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponStartAimSignature OnWeaponStartAim;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponStopAimSignature OnWeaponStopAim;
+
+	UPROPERTY(BlueprintAssignable, Category = Events)
+	FOnWeaponHitSignature OnWeaponHit;
 
 public:
 
@@ -133,6 +190,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void StopFire();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StartAim();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void StopAim();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void SetWeaponVisibility(bool bVisible);

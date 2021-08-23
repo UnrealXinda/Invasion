@@ -25,11 +25,29 @@ struct FBreakableBoneEffect
 
 	/** The particle effect that's attached to the principal socket */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<AActor> PrincipalEffect;
+	TSubclassOf<class AInvasionParticle> PrincipalEffect;
 
 	/** The particle effect that's attached to the subsidiary socket */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<AActor> SubsidiaryEffect;
+	TSubclassOf<class AInvasionParticle> SubsidiaryEffect;
+};
+
+USTRUCT(BlueprintType)
+struct FExecutedAnimDef
+{
+	GENERATED_BODY()
+
+	/** The name of the execution. Used as key to pair with player's execution montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName ExecutionName;
+
+	/** The montage to play when getting executed */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UAnimMontage* ExecutedMontage;
+
+	/** Time delay to play executed montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float Delay;
 };
 
 /**
@@ -54,21 +72,67 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Movement)
 	float MaxSprintSpeed;
 
+	/** Effect definition for bone breaking effects */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Effects)
 	TArray<FBreakableBoneEffect> BreakableBoneEffects;
+
+	/** Serialized mapping between execution name and animation montage */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Effects)
+	TArray<FExecutedAnimDef> ExecutedAnimDefs;
 	
 public:
 
 	AInvasionEnemyCharacter();
 
 	UFUNCTION(BlueprintCallable)
-	bool TryBreakBone(FName InBoneName);
+	void PauseCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	void PauseBehaviorTreeLogic(const FString& Reason);
+
+	UFUNCTION(BlueprintCallable)
+	void ResumeBehaviorTreeLogic(const FString& Reason);
+
+	UFUNCTION(BlueprintCallable)
+	bool TryStartAim();
+
+	UFUNCTION(BlueprintCallable)
+	bool TryEndAim();
+
+	UFUNCTION(BlueprintCallable)
+	bool TryBreakBone(FName InBoneName, FVector Inpulse = FVector::ZeroVector, FVector HitLocation = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintPure)
 	bool IsBoneBroken(FName InBoneName) const;
 
+	UFUNCTION(BlueprintPure)
+	FExecutedAnimDef GetExecutedAnimDef(FName ExecutionName) const;
+
 	float GetMaxWalkSpeed() const;
 
 	virtual void MoveCharacter(FVector WorldDirection, float ScaleValue = 1.0F) override;
+	virtual void InvasionTick_Implementation(float DeltaTime) override;
+
+protected:
+
+	void TickCharacterMovement(float DeltaTime);
+
+	virtual void OnCharacterDeath(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		const class UDamageType* DamageType,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
+
+	virtual void OnCharacterExecuted(
+		class UHealthComponent*  HealthComponent,
+		float                    LastDamage,
+		class AController*       InstigatedBy,
+		AActor*                  DamageCauser
+	);
 
 };

@@ -43,6 +43,16 @@ enum class EAimState : uint8
 };
 
 UENUM(BlueprintType)
+enum class EScanState : uint8
+{
+	Idle      = 0   UMETA(DisplayName = "Idle"),
+	ScanIntro = 1   UMETA(DisplayName = "Scan Intro"),
+	Scanning  = 2   UMETA(DisplayName = "Scanning"),
+	ScanOutro = 3   UMETA(DisplayName = "Scan Outro"),
+	Max       = 4,
+};
+
+UENUM(BlueprintType)
 enum class EExecuteState : uint8
 {
 	Idle      = 0   UMETA(DisplayName = "Idle"),
@@ -118,7 +128,8 @@ enum class EPostProcessEffectType : uint8
 	BrokenLens           = 1  UMETA(DisplayName = "Broken Lens"),
 	Glitch               = 2  UMETA(DisplayName = "Glitch"),
 	Scan                 = 3  UMETA(DisplayName = "Scan"),
-	Max                  = 4,
+	ColorTwitch          = 4  UMETA(DisplayName = "Color Twitch"),
+	Max                  = 5,
 };
 
 UENUM(BlueprintType)

@@ -99,7 +99,7 @@ bool AInvasionCharacter::CanBeSeenFrom(const FVector& ObserverLocation, FVector&
 	IgnoredActors.Add(const_cast<AActor*>(IgnoreActor));
 	IgnoredActors.Add(ThisActor);
 
-	bool bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, InvasionDebug::g_DebugDrawAISightTrace);
+	bool bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, (bool)InvasionDebug::g_DebugDrawAISightTrace);
 	++NumberOfLoSChecksPerformed;
 
 	if (!bHit)
@@ -156,7 +156,7 @@ bool AInvasionCharacter::CanBeSeenFrom(const FVector& ObserverLocation, FVector&
 		if ((PointIndex != IndexMin) && (PointIndex != IndexMax))
 		{
 			TraceEnd = Points[PointIndex];
-			bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, InvasionDebug::g_DebugDrawAISightTrace);
+			bHit = UInvasionGameplayStatics::RaycastTest(this, TraceStart, TraceEnd, IgnoredActors, HitLoc, true, (bool)InvasionDebug::g_DebugDrawAISightTrace);
 			++NumberOfLoSChecksPerformed;
 			++RaycastCount;
 

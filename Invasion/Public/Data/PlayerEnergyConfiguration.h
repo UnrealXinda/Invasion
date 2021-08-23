@@ -50,10 +50,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0), Category = "Energy Recover")
 	TArray<FWeaponEnergyRecover> WeaponRecover;
 
-	/** Health points recovered per second */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (ClampMin = 0.0))
-	float SelfRecoverPerSecond;
-
 public:
 
 	UFUNCTION(BlueprintPure)

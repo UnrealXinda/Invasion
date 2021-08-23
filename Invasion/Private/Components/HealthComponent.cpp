@@ -35,17 +35,9 @@ float UHealthComponent::GetMaxHealth() const
 	return MaxHealth;
 }
 
-void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, 
+void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
 	AController* InstigatedBy, AActor* DamageCauser)
 {
-	if (GetOwner() == UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
-	{
-		if (InvasionDebug::g_PlayerGodMode)
-		{
-			return;
-		}
-	}
-
 	if (Damage >= 0.0f)
 	{
 		float ActualDamage = FMath::Min(Damage, Health);
@@ -62,6 +54,14 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 
 			else
 			{
+				if (GetOwner() == UInvasionGameplayStatics::GetInvasionPlayerCharacter(GetWorld()))
+            	{
+            		if (InvasionDebug::g_PlayerGodMode)
+            		{
+            			return;
+            		}
+            	}
+
 				OnCharacterDeath.Broadcast(this, ActualDamage, DamageType, InstigatedBy, DamageCauser);
 			}
 		}
@@ -79,5 +79,3 @@ void UHealthComponent::BeginPlay()
 
 	Health = DefaultHealth;
 }
-
-

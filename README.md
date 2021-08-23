@@ -2,7 +2,7 @@
 A TPS demo project. Only C++ source included.
 Melee Execution | Scan
 :-------------------------:|:-------------------------:
-![Melee Execution](invasion.png) | ![Scan](scan.png)
+![Melee Execution](Images/melee.png) | ![Scan](Images/scan.png)
 
 
 ## Sample Video
